@@ -1,1389 +1,803 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TricoMaster · App</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PROFESSÔ">
+<meta name="theme-color" content="#ff6600">
+<title>PROFESSÔ</title>
+<script>
+(function(){
+  const m={name:"PROFESSÔ",short_name:"PROFESSÔ",start_url:"./",display:"standalone",orientation:"portrait",background_color:"#0f0f0f",theme_color:"#ff6600",icons:[{src:"data:image/svg+xml,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%230f0f0f'/><text x='96' y='130' font-family='sans-serif' font-size='110' font-weight='900' text-anchor='middle' fill='%23ff6600'>P</text></svg>`),sizes:"192x192",type:"image/svg+xml",purpose:"any maskable"}]};
+  const b=new Blob([JSON.stringify(m)],{type:'application/manifest+json'});
+  const l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(b);document.currentScript.after(l);
+})();
+if('serviceWorker'in navigator){navigator.serviceWorker.register(URL.createObjectURL(new Blob([`const C='pv3';self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(clients.claim()));self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));`],{type:'text/javascript'})),{scope:'./'}).catch(()=>{});}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  /* ── Brand greens ── */
-  --verde:     #013425;   /* primário: topbar, cabeçalhos */
-  --verde-md:  #044E38;   /* hover botão verde */
-  --verde-clr: #0B5E43;   /* hover sidebar */
-  --verde-bdr: #a3b8b1;   /* bordas verdes / nav inativo */
-  /* ── Gold ── */
-  --gold:      #C5A365;   /* botão primário, destaques, nav ativo */
-  --gold-hov:  #b59254;   /* hover botão dourado */
-  --gold-clr:  #fdf5e8;   /* fundo pill gold */
-  /* ── Surfaces ── */
-  --creme:     #F2F4F3;   /* background geral */
-  --branco:    #ffffff;   /* cards */
-  --cinza-1:   #f9fafb;   /* fundo input, fundo pill neutro */
-  --cinza-2:   #e8ece9;   /* bordas de card */
-  --cinza-3:   #d1d5db;   /* bordas de input */
-  --cinza-4:   #888888;   /* labels secundários */
-  --cinza-5:   #666666;   /* labels de campo */
-  --preto:     #1a1a1a;   /* texto principal */
-  /* ── Feedback ── */
-  --vm:        #dc2626;   /* erro, danger */
-  --vm-bg:     #fef2f2;
-  --am-bg:     #fff7ed;   /* laranja claro */
-  --am-tx:     #f97316;   /* laranja cortesia */
-  /* ── Layout ── */
-  --r:         12px;
-  --rsm:       8px;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: var(--creme); color: var(--preto); min-height: 100vh; font-size: 14px; }
+:root{--accent:#ff6600;--field:#1e6b1e;--app-bg:#0f0f0f;--card-bg:#1a1a1a;--card2:#242424;--border:#2e2e2e;--text:#f0f0f0;--muted:#666;--green:#27ae60;--yellow:#f0b429;--red:#e74c3c;--blue:#3a7bd5;--radius:14px;--nav-h:62px;--hdr-h:54px;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);--kit:#111111;--kit-text:#ffffff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{background:var(--app-bg);font-family:'Barlow',sans-serif;color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes glowring{0%,100%{box-shadow:0 0 0 2px rgba(240,180,41,.4),0 2px 10px rgba(0,0,0,.5)}50%{box-shadow:0 0 0 5px rgba(240,180,41,.6),0 2px 12px rgba(0,0,0,.5)}}
 
-.shell { max-width: 480px; margin: 0 auto; background: var(--branco); min-height: 100vh; box-shadow: 0 0 40px rgba(0,0,0,.08); display: flex; flex-direction: column; }
+.fullscreen{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--app-bg)}
+.fullscreen.hidden{display:none!important}
+.spinner{width:36px;height:36px;border:3px solid #333;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 
-/* ── topbar ── */
-.topbar { background: var(--verde); padding: 16px 20px 0; position: sticky; top: 0; z-index: 100; }
-.topbar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.logo { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -.3px; }
-.logo span { font-weight: 400; color: var(--gold); }
-.badge-env { font-size: 10px; font-weight: 600; letter-spacing: .8px; background: rgba(197,163,101,.2); color: var(--gold); padding: 3px 10px; border-radius: 20px; }
-.tabs { display: flex; }
-.tab { flex: 1; text-align: center; padding: 10px 0 14px; font-size: 13px; font-weight: 500; color: var(--verde-bdr); cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; transition: all .2s; }
-.tab.active { color: #fff; border-bottom-color: var(--gold); }
+.hdr{position:fixed;top:0;left:0;right:0;z-index:200;height:calc(var(--hdr-h) + var(--safe-top));padding-top:var(--safe-top);background:var(--app-bg);border-bottom:2px solid var(--accent);display:flex;align-items:center;padding-left:14px;padding-right:14px;gap:8px}
+.hdr-logo{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--accent);letter-spacing:3px;line-height:1;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-logo small{font-size:.68rem;color:var(--muted);letter-spacing:1px;display:block;margin-top:-2px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase}
+.icon-btn{width:34px;height:34px;background:var(--card-bg);border:1px solid var(--border);border-radius:9px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0}
+.icon-btn:active{background:var(--accent);border-color:var(--accent)}
+.role-badge{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:800;padding:3px 7px;border-radius:5px;letter-spacing:1px;text-transform:uppercase;flex-shrink:0}
 
-/* ── content ── */
-.content { padding: 24px 20px 56px; flex: 1; overflow-y: auto; }
-.screen { display: none; }
-.screen.active { display: block; }
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:200;height:calc(var(--nav-h) + var(--safe-bot));background:var(--app-bg);border-top:2px solid var(--accent);display:flex;align-items:flex-start;padding-top:8px}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:4px 2px;position:relative;transition:color .18s}
+.nb-icon{font-size:1.35rem;line-height:1;display:flex;align-items:center;justify-content:center;height:22px}
+.nb.on{color:var(--accent)}.nb.on::after{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:28px;height:3px;background:var(--accent);border-radius:0 0 4px 4px}.nb:active{opacity:.7}
 
-/* ── progress ── */
-.prog-wrap { display: flex; gap: 6px; margin-bottom: 24px; align-items: center; }
-.prog-step { flex: 1; height: 4px; border-radius: 4px; background: var(--cinza-2); transition: background .3s; }
-.prog-step.done { background: var(--gold); }
-.prog-label { font-size: 11px; color: var(--cinza-4); white-space: nowrap; margin-left: 4px; }
+.app-body{padding-top:calc(var(--hdr-h) + var(--safe-top) + 10px);padding-bottom:calc(var(--nav-h) + var(--safe-bot) + 12px);min-height:100vh}
+.screen{display:none;padding:0 12px;animation:fadeUp .22s ease both}.screen.active{display:block}
 
-/* ── headings ── */
-.form-title { font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 700; color: var(--verde); margin-bottom: 4px; letter-spacing: -.3px; }
-.form-sub   { font-size: 13px; color: var(--cinza-4); margin-bottom: 24px; font-weight: 400; }
-.sec-head {
-  font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
-  color: var(--verde); margin: 22px 0 12px;
-  display: flex; align-items: center; gap: 8px;
-}
-.sec-head::after { content:''; flex:1; height:1px; background: var(--cinza-2); }
+.card{background:var(--card-bg);border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--text);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:14px}
 
-/* ── fields ── */
-.field { margin-bottom: 14px; }
-.field > label, .lbl {
-  display: block; font-size: 11px; font-weight: 600; letter-spacing: .5px;
-  color: var(--cinza-5); text-transform: uppercase; margin-bottom: 6px;
-}
-.field input[type=text],
-.field input[type=number],
-.field textarea,
-.field select {
-  width: 100%; padding: 11px 14px;
-  border: 1.5px solid var(--cinza-3); border-radius: var(--rsm);
-  background: var(--cinza-1); font-family: 'Inter', sans-serif;
-  font-size: 14px; color: var(--preto); outline: none; transition: border .2s;
-}
-.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--gold); background: var(--branco); }
-.field textarea { resize: none; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.chrono-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:12px}
+.period-row{display:flex;gap:5px;width:100%}
+.pbtn{flex:1;background:var(--card2);border:1.5px solid var(--border);color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:8px 4px;border-radius:8px;cursor:pointer;transition:.15s}
+.pbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chrono-time{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:var(--text);letter-spacing:4px;line-height:1;text-shadow:0 0 40px rgba(255,102,0,.25);transition:color .3s}
+.chrono-time.warn{color:var(--yellow)}.chrono-time.over{color:var(--red);animation:blink .7s infinite}
+.chrono-btns{display:flex;gap:8px;width:100%}
+.cbtn{flex:1;padding:14px;border:none;border-radius:11px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1.5px;cursor:pointer;transition:.15s}.cbtn:active{transform:scale(.97)}
+.cbtn-go{background:var(--green);color:#fff}.cbtn-pause{background:#444;color:#fff}.cbtn-reset{background:var(--card2);color:var(--muted);flex:.4;font-size:.9rem}
+.cm-pill{background:var(--card2);color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border)}.cm-pill b{color:var(--text)}
 
-/* ── pills ── */
-.pill-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
-.pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px; border: 1.5px solid var(--cinza-3); border-radius: 24px;
-  font-size: 13px; font-weight: 500; color: var(--cinza-5); cursor: pointer; user-select: none;
-  transition: all .15s; background: var(--branco);
-}
-.pill::before { content:''; width:7px; height:7px; border-radius:50%; border:1.5px solid var(--cinza-3); flex-shrink:0; transition:all .15s; }
-.pill:hover   { border-color: var(--gold); background: var(--gold-clr); color: var(--preto); }
-.pill.sel     { background: var(--gold-clr); border-color: var(--gold); color: var(--verde); font-weight:600; }
-.pill.sel::before { background: var(--gold); border-color: var(--gold); }
+.campo-wrap{margin-bottom:12px;border-radius:var(--radius);overflow:hidden;border:2px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.campo{position:relative;background:var(--field);width:100%;aspect-ratio:68/105;max-width:340px;margin:0 auto;overflow:hidden;display:block}
+.campo::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) 30px,rgba(0,0,0,.06) 30px,rgba(0,0,0,.06) 60px);pointer-events:none;z-index:1}
+.campo-lines{position:absolute;inset:0;z-index:2;pointer-events:none}.campo-lines svg{width:100%;height:100%}
+#campo-players{position:absolute;inset:0;z-index:3;pointer-events:none}
+.slot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;pointer-events:auto;z-index:4;transition:transform .15s}.slot:active{transform:translate(-50%,-50%) scale(.9)}
+.slot-ring{width:38px;height:38px;border-radius:50%;border:2.5px dashed rgba(255,255,255,.35);background:rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;transition:.2s}
+.slot-num{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:rgba(255,255,255,.45);line-height:1}
+.slot.filled .slot-ring{background:var(--kit);border:3px solid rgba(255,255,255,.8);border-style:solid;box-shadow:0 2px 10px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.15)}
+.slot.filled .slot-num{display:none}
+.slot-initials{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--kit-text);line-height:1;display:none}.slot.filled .slot-initials{display:block}
+.slot-name{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;color:#fff;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,1);max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.1;opacity:0;transition:opacity .2s}.slot.filled .slot-name{opacity:1}
+.slot-min{font-family:'Barlow Condensed',sans-serif;font-size:.52rem;font-weight:700;color:var(--green);text-shadow:0 1px 4px rgba(0,0,0,1);opacity:0;line-height:1}.slot.filled .slot-min{opacity:1}
+.slot.filled.done .slot-ring{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(240,180,41,.5),0 2px 10px rgba(0,0,0,.6)}
+.slot.filled.warn-time .slot-ring{border-color:var(--yellow);animation:glowring .8s infinite}
 
-/* ── queda onde ── */
-.queda-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
-.queda-item { background: var(--cinza-1); border-radius: var(--rsm); padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; }
-.queda-item span { font-size: 13px; color: var(--cinza-5); }
-.sn-pair { display: flex; gap: 6px; }
-.sn-btn { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight:500; cursor: pointer; border: 1px solid var(--cinza-3); background: var(--branco); color: var(--cinza-4); transition: all .15s; }
-.sn-btn.sel-s { background: var(--gold-clr); border-color: var(--gold); color: var(--verde); font-weight:600; }
-.sn-btn.sel-n { background: var(--cinza-1); border-color: var(--cinza-3); color: var(--cinza-5); font-weight:600; }
+.bench-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:12px}
+.bench-label{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.bench-grid{display:flex;flex-wrap:wrap;gap:6px}
+.bench-chip{display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:8px;background:var(--card2);border:1.5px solid var(--border);cursor:pointer;transition:.15s}.bench-chip:active{border-color:var(--accent);transform:scale(.96)}
+.bench-chip-dot{width:8px;height:8px;border-radius:50%;background:var(--kit);border:1px solid rgba(255,255,255,.2);flex-shrink:0}
+.bench-chip-name{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;color:var(--text)}
+.bench-chip-min{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;color:var(--green)}.bench-chip-min.z{color:var(--muted)}
+.bench-chip-pos{font-size:.58rem;background:rgba(255,255,255,.08);color:var(--muted);padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.3px}
 
-/* ── doença rows (médico) ── */
-.dx-bloco { border: 1.5px solid var(--cinza-2); border-radius: var(--r); overflow: hidden; margin-bottom: 14px; }
-.dx-row   { padding: 10px 14px; border-bottom: 1px solid var(--cinza-1); }
-.dx-row:last-child { border-bottom: none; }
-.dx-row-top { display: flex; align-items: center; gap: 10px; }
-.dx-nome  { font-size: 13px; flex: 1; }
-.dx-detail { margin-top: 6px; display: none; }
-.dx-detail input, .dx-detail textarea {
-  width: 100%; padding: 7px 10px; border: 1px solid var(--cinza-3); border-radius: 6px;
-  font-size: 13px; background: var(--cinza-1); font-family: 'Inter', sans-serif; color: var(--preto);
-}
+.min-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;background:var(--card2);border:1px solid var(--border);margin-bottom:4px;cursor:pointer;transition:.15s}.min-row:active{background:#2e2e2e}
+.min-name{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;flex:1}
+.min-pos{background:rgba(255,255,255,.07);color:var(--muted);font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.3px;flex-shrink:0}
+.min-bar-wrap{flex:1.4;max-width:110px}.min-bar-bg{background:#2a2a2a;border-radius:20px;height:5px;overflow:hidden}.min-bar-fill{height:100%;border-radius:20px;transition:width .5s}
+.min-bar-fill.ok{background:var(--green)}.min-bar-fill.part{background:var(--blue)}.min-bar-fill.zero{background:#333}
+.min-num{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:800;min-width:32px;text-align:right;flex-shrink:0}
+.min-num.ok{color:var(--green)}.min-num.part{color:var(--blue)}.min-num.zero{color:var(--muted)}
+.min-need{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;color:var(--muted);flex-shrink:0;min-width:30px;text-align:right}.min-need.urgent{color:var(--yellow)}
+.sub-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--card2);margin-bottom:4px;font-family:'Barlow Condensed',sans-serif;font-size:.85rem}
+.sub-time-badge{color:var(--muted);font-size:.72rem;font-weight:700;min-width:36px}
+.sub-in{color:var(--green);font-weight:800}.sub-out{color:var(--red);font-weight:800}
+.warn-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.warn-chip{background:rgba(240,180,41,.12);border:1.5px solid rgba(240,180,41,.3);border-radius:6px;padding:3px 8px;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--yellow)}
 
-/* inline scale row: label + buttons on same line */
-.scale-inline { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.scale-inline .scale-lbl { font-size: 11px; font-weight: 600; letter-spacing: .5px; color: var(--cinza-5); text-transform: uppercase; white-space: nowrap; min-width: 100px; }
-.scale-inline .scale-row { margin-top: 0; flex-wrap: nowrap; }
-.rp { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight:500; cursor: pointer; border: 1px solid var(--cinza-3); background: var(--branco); color: var(--cinza-4); transition: all .15s; white-space: nowrap; }
-.rp-x { font-size: 13px; font-weight: 700; line-height: 1; opacity: .6; margin-left: 2px; }
-.rp-x:hover { opacity: 1; }
-.rp:hover    { background: var(--cinza-1); }
-.rp.sel-nao  { background: #e6f2ec; border-color: var(--verde); color: var(--verde); font-weight: 600; }
-.rp.sel-sim  { background: var(--vm-bg); border-color: #F5C6C5; color: var(--vm); font-weight: 600; }
+.form-label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.form-input{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;color:var(--text);padding:12px 13px;font-family:'Barlow',sans-serif;font-size:.95rem;transition:border-color .2s;-webkit-appearance:none;outline:none}
+.form-input:focus{border-color:var(--accent)}.form-input::placeholder{color:#444}
+.field{margin-bottom:12px}.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-main{width:100%;background:var(--accent);color:#fff;border:none;border-radius:11px;padding:14px;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;cursor:pointer;transition:.15s}.btn-main:active{opacity:.8;transform:scale(.98)}.btn-main:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-ghost{width:100%;background:var(--card2);color:var(--muted);border:1px solid var(--border);border-radius:11px;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1.5px;cursor:pointer;margin-top:8px}
+.player-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}.player-row:last-child{border-bottom:none}
+.player-avatar{width:34px;height:34px;border-radius:50%;background:var(--kit);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:var(--kit-text);flex-shrink:0}
+.player-info{flex:1;min-width:0}.player-name-txt{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700}.player-meta{font-size:.7rem;color:var(--muted);font-weight:500}
+.mini-btn{background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:.82rem;cursor:pointer;color:var(--text);flex-shrink:0}.mini-btn:active{background:var(--accent);border-color:var(--accent)}
+.field-toggle{padding:5px 10px;border-radius:7px;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;flex-shrink:0}
+.ft-on{background:rgba(231,76,60,.15);color:var(--red);border:1px solid rgba(231,76,60,.3)}.ft-off{background:rgba(39,174,96,.15);color:var(--green);border:1px solid rgba(39,174,96,.3)}
 
-/* ── escalas ── */
-.scale-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-.scale-btn { width: 40px; height: 40px; border-radius: 8px; border: 1.5px solid var(--cinza-3); background: var(--branco); font-size: 14px; font-weight:500; cursor: pointer; transition: all .15s; color: var(--cinza-5); }
-.scale-btn:hover { border-color: var(--gold); background: var(--gold-clr); color: var(--verde); }
-.scale-btn.sel   { background: var(--verde); border-color: var(--verde); color: #fff; }
+.color-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.color-swatch{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;cursor:pointer}
+.swatch-preview{width:32px;height:32px;border-radius:6px;border:2px solid rgba(255,255,255,.15);flex-shrink:0}
+.swatch-label{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700}.swatch-hex{font-size:.65rem;color:var(--muted);font-family:monospace}
+input[type=color]{position:absolute;opacity:0;width:1px;height:1px}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}.cfg-row:last-child{border-bottom:none}
+.cfg-label{font-family:'Barlow Condensed',sans-serif;font-size:.95rem;font-weight:700}
 
-/* ── cards info ── */
-.info-bloco { background: var(--cinza-1); border-radius: var(--r); padding: 14px 16px; margin-bottom: 14px; }
-.info-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid var(--cinza-2); gap: 12px; }
-.info-row:last-child { border-bottom: none; }
-.info-label { font-size: 11px; font-weight:600; color: var(--cinza-4); letter-spacing:.3px; white-space:nowrap; }
-.info-val   { font-size: 13px; color: var(--preto); text-align: right; max-width: 65%; }
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}.overlay.open{opacity:1;pointer-events:auto}
+.sheet{background:var(--card-bg);border-radius:20px 20px 0 0;border:1px solid var(--border);border-bottom:none;padding:18px 18px calc(18px + var(--safe-bot));width:100%;max-width:480px;max-height:88vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}.overlay.open .sheet{transform:translateY(0)}
+.sheet-handle{width:38px;height:4px;background:#333;border-radius:2px;margin:0 auto 14px}
+.sheet-title{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;margin-bottom:3px}.sheet-sub{font-size:.78rem;color:var(--muted);margin-bottom:14px}
+.sel-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;border:2px solid var(--border);background:var(--card2);cursor:pointer;margin-bottom:5px;transition:.15s}.sel-row:active,.sel-row.picked{border-color:var(--accent);background:rgba(255,102,0,.08)}
+.sel-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:.9rem;background:var(--kit);color:var(--kit-text);flex-shrink:0;border:2px solid rgba(255,255,255,.15)}
+.sel-info{flex:1}.sel-name{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700}.sel-detail{font-size:.7rem;color:var(--muted)}
+.sel-min{font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:800;color:var(--green)}.sel-min.z{color:var(--muted)}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+.mbtn{flex:1;padding:14px;border:none;border-radius:11px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1.5px;cursor:pointer;transition:.15s}.mbtn:active{transform:scale(.97)}
+.mbtn-ok{background:var(--accent);color:#fff}.mbtn-ghost{background:var(--card2);color:var(--muted);border:1px solid var(--border)}.mbtn-del{background:rgba(231,76,60,.15);color:var(--red);border:1px solid rgba(231,76,60,.3);flex:.6}
 
-/* ── tratamento box ── */
-.trat-box { background: var(--gold-clr); border: 1.5px solid #e8d4aa; border-radius: var(--r); padding: 14px 16px; margin-bottom: 14px; }
-.trat-box .trat-tit { font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--verde); margin-bottom:10px; }
-.trat-box textarea { width:100%; background:transparent; border:none; font-family:'Inter',sans-serif; font-size:13px; color:#5a3e10; line-height:1.6; resize:none; outline:none; min-height:80px; }
+.toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-bot) + 14px);left:50%;transform:translateX(-50%) translateY(16px);background:#1a1a1a;color:#fff;border:1px solid var(--border);border-left:3px solid var(--accent);padding:11px 18px;border-radius:30px;font-family:'Barlow Condensed',sans-serif;font-size:.95rem;letter-spacing:.5px;white-space:nowrap;z-index:600;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.22,.68,0,1.2);box-shadow:0 8px 24px rgba(0,0,0,.5)}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;color:var(--muted);padding:20px 0;font-family:'Barlow Condensed',sans-serif;font-size:.95rem;letter-spacing:.5px}
+.sec-lbl{font-family:'Bebas Neue',sans-serif;font-size:.82rem;letter-spacing:2px;color:var(--muted);display:flex;align-items:center;gap:8px;margin:0 0 6px 2px}
+.alert-bar{background:rgba(240,180,41,.1);border:1.5px solid rgba(240,180,41,.25);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:none}.alert-bar.show{display:block}
+.alert-bar-title{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.warn-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.warn-chip{background:rgba(240,180,41,.12);border:1.5px solid rgba(240,180,41,.3);border-radius:6px;padding:3px 8px;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--yellow)}
 
-/* ── familiar / tipos ── */
-.fam-entrada { border: 1.5px solid var(--cinza-2); border-radius: var(--r); padding: 12px 14px; margin-bottom: 10px; }
-.fam-top     { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.fam-top input { padding: 9px 12px; border: 1.5px solid var(--cinza-3); border-radius: var(--rsm); font-size: 13px; font-family: 'Inter', sans-serif; background: var(--cinza-1); width: 100%; }
-.tipos-grid  { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin: 10px 0 6px; }
-.tipo-card   { border: 2px solid var(--cinza-2); border-radius: var(--rsm); padding: 8px 4px; text-align: center; cursor: pointer; transition: all .15s; background: var(--branco); }
-.tipo-card:hover { border-color: var(--gold); background: var(--gold-clr); }
-.tipo-card.sel   { border-color: var(--gold); background: var(--gold-clr); }
-.tipo-card svg   { display: block; margin: 0 auto 4px; }
-.tipo-card .tlbl { font-size: 10px; font-weight:600; color: var(--cinza-5); }
-.tipo-card.sel .tlbl { color: var(--verde); }
-.fam-sel { font-size: 12px; color: var(--cinza-4); min-height: 18px; margin-top: 4px; }
-.fam-sel span { background: var(--gold-clr); color: var(--verde); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 10px; font-weight:600; font-size:11px; }
+/* MASTER */
+.team-card{display:flex;align-items:center;gap:12px;padding:12px;border-radius:11px;background:var(--card2);border:1.5px solid var(--border);margin-bottom:8px;cursor:pointer;transition:.15s}.team-card:active{border-color:var(--accent)}
+.team-avatar{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;flex-shrink:0;border:2px solid rgba(255,255,255,.1)}
+.team-name{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-meta{font-size:.7rem;color:var(--muted);font-weight:500;margin-top:2px}
 
-/* ── médico paciente cards ── */
-.pac-card { background: var(--branco); border: 1.5px solid var(--cinza-2); border-radius: var(--r); padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 14px; }
-.pac-card:hover { border-color: var(--gold); box-shadow: 0 2px 12px rgba(1,52,37,.08); }
-.pac-avatar { width:44px; height:44px; border-radius:50%; background:var(--gold-clr); color:var(--verde); font-family:'Inter',sans-serif; font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.pac-nome { font-size:14px; font-weight:600; }
-.pac-hora { font-size:12px; color:var(--cinza-4); margin-top:2px; }
-.tag      { font-size:10px; font-weight:700; letter-spacing:.5px; padding:4px 10px; border-radius:20px; }
-.tag-ok   { background:var(--gold-clr); color:#7a5c2a; border: 1px solid #e0c88a; }
-.tag-wait { background:var(--am-bg); color:var(--am-tx); }
-
-/* ── sub-tabs médico ── */
-.sub-tabs { display: flex; gap: 0; border-bottom: 1.5px solid var(--cinza-2); margin-bottom: 20px; }
-.sub-tab  { flex: 1; text-align: center; padding: 10px 0; font-size: 13px; font-weight:500; color: var(--cinza-4); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1.5px; transition: all .2s; }
-.sub-tab.active { color: var(--verde); border-bottom-color: var(--gold); font-weight:600; }
-
-/* ── buttons ── */
-.btn { width:100%; padding:14px; border-radius:var(--r); border:none; font-family:'Inter',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all .2s; margin-top:12px; letter-spacing:.2px; }
-.btn-primary   { background: var(--gold); color: #fff; }
-.btn-primary:hover { background: var(--gold-hov); }
-.btn-secondary { background: var(--cinza-1); color: var(--cinza-5); border:1.5px solid var(--cinza-2); }
-.btn-secondary:hover { background: var(--cinza-2); }
-.btn-pdf { background: var(--verde); color: #fff; border: none; }
-.btn-pdf:hover { background: var(--verde-md); }
-.btn-save { background: var(--verde); color: #fff; border: none; }
-.btn-save:hover { background: var(--verde-md); }
-.btn-sm  { width:auto; padding:9px 18px; font-size:13px; }
-.back-btn { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:500; color:var(--verde); cursor:pointer; margin-bottom:20px; background:none; border:none; }
-
-/* ── success ── */
-.success-card { background: var(--gold-clr); border: 1.5px solid #e0c88a; border-radius: var(--r); padding: 32px 24px; text-align:center; display:none; }
-.success-card h2 { font-family:'Inter',sans-serif; font-size:20px; font-weight:700; color:var(--verde); margin-bottom:8px; }
-.success-card p  { font-size:14px; color:var(--cinza-5); line-height:1.6; }
-
-/* ── toast / loader ── */
-.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:#016630; color:#fff; padding:12px 24px; border-radius:30px; font-size:13px; font-weight:500; transition:transform .3s; z-index:999; white-space:nowrap; }
-.toast.show { transform:translateX(-50%) translateY(0); }
-.loader-wrap { display:none; flex-direction:column; align-items:center; padding:28px 0; gap:12px; }
-.spinner { width:36px; height:36px; border:3px solid var(--cinza-2); border-top-color:var(--gold); border-radius:50%; animation:spin .7s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.loader-txt { font-size:13px; color:var(--cinza-4); }
-
-/* readonly style */
-input[readonly] { background: var(--cinza-1) !important; color: var(--cinza-4); cursor: default; }
+/* AUTH */
+.auth-tabs{display:flex;gap:0;margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.auth-tab{flex:1;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1.5px;border:none;cursor:pointer;transition:.15s}
+.auth-tab.on{background:var(--accent);color:#fff}.auth-tab.off{background:var(--card2);color:var(--muted)}
 </style>
 </head>
 <body>
-<div class="shell">
-  <div class="topbar">
-    <div class="topbar-head">
-      <div class="logo">Trico<span>Master</span></div>
-      <div class="badge-env">MVP · TESTE</div>
+
+<!-- SPLASH -->
+<div id="splash" class="fullscreen">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--accent);letter-spacing:4px;margin-bottom:16px">PROFESSÔ</div>
+  <div class="spinner"></div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:.78rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:12px">Conectando...</div>
+</div>
+
+<!-- AUTH -->
+<div id="auth-screen" class="fullscreen hidden" style="padding:24px;overflow-y:auto;align-items:stretch">
+  <div style="width:100%;max-width:340px;margin:0 auto">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--accent);letter-spacing:4px;text-align:center;margin-bottom:4px">PROFESSÔ</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.78rem;color:var(--muted);text-align:center;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px">Gerenciador de Time</div>
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tab-login" onclick="switchTab('login')">ENTRAR</button>
+      <button class="auth-tab off" id="tab-reg" onclick="switchTab('reg')">CADASTRAR</button>
     </div>
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('pac')" id="tab-pac">Paciente</button>
-      <button class="tab" onclick="pedirSenha()" id="tab-med">Médico 🔒</button>
+    <!-- LOGIN -->
+    <div id="form-login">
+      <div class="field"><label class="form-label">E-mail</label><input id="l-email" type="email" class="form-input" placeholder="seu@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')document.getElementById('l-senha').focus()"></div>
+      <div class="field"><label class="form-label">Senha</label><input id="l-senha" type="password" class="form-input" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+      <button class="btn-main" id="btn-login" onclick="fazerLogin()">ENTRAR</button>
+      <div style="text-align:center;margin-top:14px">
+        <button onclick="entrarComoVisitante()" style="background:none;border:none;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;text-decoration:underline">👁 Entrar como visitante</button>
+      </div>
     </div>
-  </div>
-
-  <div class="content">
-
-    <!-- ══════════════════ PACIENTE ══════════════════ -->
-    <div class="screen active" id="screen-pac">
-      <div id="pac-form">
-
-        <!-- ETAPA 1 -->
-        <div id="step1">
-          <div class="prog-wrap">
-            <div class="prog-step done"></div><div class="prog-step"></div>
-            <div class="prog-step"></div><div class="prog-step"></div>
-            <span class="prog-label">1 de 4</span>
-          </div>
-          <div class="form-title">Questionário</div>
-          <div class="form-sub">Preencha antes da consulta. Leva menos de 5 minutos.</div>
-
-          <div class="field">
-            <label>Data</label>
-            <input type="text" id="p-data" readonly/>
-          </div>
-          <div class="field">
-            <label>Nome completo</label>
-            <input type="text" id="p-nome" placeholder="Seu nome completo"/>
-          </div>
-          <div class="row2">
-            <div class="field"><label>Idade</label><input type="number" id="p-idade" placeholder="Ex: 32"/></div>
-            <div class="field"><label>Profissão</label><input type="text" id="p-prof" placeholder="Ex: Professora"/></div>
-          </div>
-          <div class="field">
-            <label>Possui convênio médico?</label>
-            <div class="pill-group" id="pg-conv" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-            <input type="text" id="p-conv-qual" placeholder="Qual convênio?" style="margin-top:8px;display:none"/>
-          </div>
-          <div class="field">
-            <label>Como nos conheceu?</label>
-            <div class="pill-group" id="pg-conheceu" data-type="multi">
-              <div class="pill" data-val="Google" onclick="selPill(this)">Google</div>
-              <div class="pill" data-val="Instagram" onclick="selPill(this)">Instagram</div>
-              <div class="pill" data-val="Facebook" onclick="selPill(this)">Facebook</div>
-              <div class="pill" data-val="Indicação" onclick="selPill(this)">Indicação</div>
-              <div class="pill" data-val="Outros" onclick="selPill(this)">Outros</div>
-            </div>
-          </div>
-          <button class="btn btn-primary" onclick="goStep(2)">Continuar →</button>
-        </div>
-
-        <!-- ETAPA 2 -->
-        <div id="step2" style="display:none">
-          <div class="prog-wrap">
-            <div class="prog-step done"></div><div class="prog-step done"></div>
-            <div class="prog-step"></div><div class="prog-step"></div>
-            <span class="prog-label">2 de 4</span>
-          </div>
-          <div class="form-title">Queixa principal</div>
-          <div class="form-sub">Conte o que está acontecendo com seus cabelos.</div>
-
-          <div class="field">
-            <label>1. Tipo de queixa</label>
-            <div class="pill-group" id="pg-queixa" data-type="multi">
-              <div class="pill" data-val="Queda de cabelo" onclick="selPill(this)">Queda de cabelo</div>
-              <div class="pill" data-val="Falhas" onclick="selPill(this)">Falhas</div>
-              <div class="pill" data-val="Quebra de fios" onclick="selPill(this)">Quebra de fios</div>
-              <div class="pill" data-val="Outros" onclick="selPill(this)">Outros</div>
-            </div>
-          </div>
-          <div class="row2">
-            <div class="field"><label>Tempo do problema</label><input type="text" id="p-tempo" placeholder="Ex: 3 meses"/></div>
-            <div class="field"><label>Fios por dia (média)</label><input type="text" id="p-fios" placeholder="Ex: ~80"/></div>
-          </div>
-          <div class="field">
-            <label>2. O problema está</label>
-            <div class="pill-group" id="pg-prog" data-type="radio">
-              <div class="pill" data-val="Estável" onclick="selPill(this)">Estável</div>
-              <div class="pill" data-val="Aumentando" onclick="selPill(this)">Aumentando</div>
-            </div>
-          </div>
-          <div class="field">
-            <label>Queda ocorre onde?</label>
-            <div class="queda-grid">
-              <div class="queda-item"><span>No banho</span><div class="sn-pair"><button class="sn-btn" onclick="selSN(this,'qb','S')">Sim</button><button class="sn-btn" onclick="selSN(this,'qb','N')">Não</button></div></div>
-              <div class="queda-item"><span>Ao escovar</span><div class="sn-pair"><button class="sn-btn" onclick="selSN(this,'qe','S')">Sim</button><button class="sn-btn" onclick="selSN(this,'qe','N')">Não</button></div></div>
-              <div class="queda-item"><span>No chão</span><div class="sn-pair"><button class="sn-btn" onclick="selSN(this,'qc','S')">Sim</button><button class="sn-btn" onclick="selSN(this,'qc','N')">Não</button></div></div>
-              <div class="queda-item"><span>Na roupa</span><div class="sn-pair"><button class="sn-btn" onclick="selSN(this,'qr','S')">Sim</button><button class="sn-btn" onclick="selSN(this,'qr','N')">Não</button></div></div>
-              <div class="queda-item"><span>No travesseiro</span><div class="sn-pair"><button class="sn-btn" onclick="selSN(this,'qt','S')">Sim</button><button class="sn-btn" onclick="selSN(this,'qt','N')">Não</button></div></div>
-            </div>
-          </div>
-          <div class="field">
-            <label>3. Alterações no couro cabeludo</label>
-            <div class="pill-group" id="pg-couro" data-type="multi">
-              <div class="pill" data-val="Oleosidade" onclick="selPill(this)">Oleosidade</div>
-              <div class="pill" data-val="Caspa" onclick="selPill(this)">Caspa</div>
-              <div class="pill" data-val="Crostas" onclick="selPill(this)">Crostas</div>
-              <div class="pill" data-val="Descamação" onclick="selPill(this)">Descamação</div>
-              <div class="pill" data-val="Vermelhidão" onclick="selPill(this)">Vermelhidão</div>
-              <div class="pill" data-val="Coceira" onclick="selPill(this)">Coceira</div>
-              <div class="pill" data-val="Ardor" onclick="selPill(this)">Ardor</div>
-              <div class="pill" data-val="Odor" onclick="selPill(this)">Odor</div>
-              <div class="pill" data-val="Secreção" onclick="selPill(this)">Secreção</div>
-              <div class="pill" data-val="Dor" onclick="selPill(this)">Dor</div>
-            </div>
-          </div>
-          <div class="field">
-            <label>4. Já apresentou outras crises?</label>
-            <div class="pill-group" id="pg-crise" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-            <input type="text" id="p-crise-q" placeholder="Quando?" style="margin-top:8px;display:none"/>
-          </div>
-          <div class="field">
-            <label>5. Já fez tratamento para este problema?</label>
-            <div class="pill-group" id="pg-tratou" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-            <input type="text" id="p-trat-q" placeholder="Quando?" style="margin-top:8px;display:none"/>
-          </div>
-          <div class="field">
-            <label>Tipos de tratamento realizados</label>
-            <div class="pill-group" id="pg-trattipos" data-type="multi">
-              <div class="pill" data-val="Fórmulas via oral" onclick="selPill(this)">Fórmulas oral</div>
-              <div class="pill" data-val="Solução capilar" onclick="selPill(this)">Solução capilar</div>
-              <div class="pill" data-val="Mesoterapia" onclick="selPill(this)">Mesoterapia</div>
-              <div class="pill" data-val="PRP" onclick="selPill(this)">PRP</div>
-              <div class="pill" data-val="Microagulhamento" onclick="selPill(this)">Microagulhamento</div>
-              <div class="pill" data-val="Shampoo antiqueda" onclick="selPill(this)">Shampoo antiqueda</div>
-              <div class="pill" data-val="Laserterapia" onclick="selPill(this)">Laserterapia</div>
-              <div class="pill" data-val="MMP" onclick="selPill(this)">MMP</div>
-              <div class="pill" data-val="Terapia capilar" onclick="selPill(this)">Terapia capilar</div>
-            </div>
-          </div>
-          <button class="btn btn-primary" onclick="goStep(3)">Continuar →</button>
-          <button class="btn btn-secondary" onclick="goStep(1)">← Voltar</button>
-        </div>
-
-        <!-- ETAPA 3 -->
-        <div id="step3" style="display:none">
-          <div class="prog-wrap">
-            <div class="prog-step done"></div><div class="prog-step done"></div>
-            <div class="prog-step done"></div><div class="prog-step"></div>
-            <span class="prog-label">3 de 4</span>
-          </div>
-          <div class="form-title">Hábitos capilares</div>
-          <div class="form-sub">Rotina e cuidados com o cabelo.</div>
-
-          <div class="field">
-            <label>6. Está tomando alguma medicação?</label>
-            <div class="pill-group" id="pg-med" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-            <textarea id="p-med-q" rows="2" placeholder="Quais medicamentos?" style="margin-top:8px;display:none"></textarea>
-          </div>
-          <div class="field">
-            <label>7. Com qual frequência lava os cabelos?</label>
-            <div class="pill-group" id="pg-lav" data-type="radio">
-              <div class="pill" data-val="1x/semana" onclick="selPill(this)">1x/semana</div>
-              <div class="pill" data-val="2x/semana" onclick="selPill(this)">2x/semana</div>
-              <div class="pill" data-val="3x/semana" onclick="selPill(this)">3x/semana</div>
-              <div class="pill" data-val="Todo dia" onclick="selPill(this)">Todo dia</div>
-            </div>
-          </div>
-          <div class="field">
-            <label>8. Faz química no cabelo?</label>
-            <div class="pill-group" id="pg-quim" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-            <div id="quim-detail" style="display:none;margin-top:10px">
-              <div class="pill-group" id="pg-quimtipo" data-type="multi" style="margin-bottom:8px">
-                <div class="pill" data-val="Tintura" onclick="selPill(this)">Tintura</div>
-                <div class="pill" data-val="Tonalizante" onclick="selPill(this)">Tonalizante</div>
-                <div class="pill" data-val="Botox" onclick="selPill(this)">Botox</div>
-                <div class="pill" data-val="Progressiva" onclick="selPill(this)">Progressiva</div>
-                <div class="pill" data-val="Outros" onclick="selPill(this)">Outros</div>
-              </div>
-              <div class="row2">
-                <input type="text" id="p-quim-freq" placeholder="Frequência" style="padding:9px 12px;border:1.5px solid var(--cinza-3);border-radius:var(--rsm);font-family:'Inter',sans-serif;font-size:13px;background:var(--cinza-1)"/>
-                <input type="text" id="p-quim-4m" placeholder="Últimos 4 meses" style="padding:9px 12px;border:1.5px solid var(--cinza-3);border-radius:var(--rsm);font-family:'Inter',sans-serif;font-size:13px;background:var(--cinza-1)"/>
-              </div>
-            </div>
-          </div>
-          <div class="field">
-            <label>9. Utiliza chapinha / escova?</label>
-            <div class="pill-group" id="pg-chap" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-            <input type="text" id="p-chap-freq" placeholder="Com qual frequência?" style="margin-top:8px;display:none"/>
-          </div>
-          <div class="field">
-            <label>9. Tem alongamento?</label>
-            <div class="pill-group" id="pg-along" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-            <input type="text" id="p-along-t" placeholder="Há quanto tempo?" style="margin-top:8px;display:none"/>
-          </div>
-          <button class="btn btn-primary" onclick="goStep(4)">Continuar →</button>
-          <button class="btn btn-secondary" onclick="goStep(2)">← Voltar</button>
-        </div>
-
-        <!-- ETAPA 4 -->
-        <div id="step4" style="display:none">
-          <div class="prog-wrap">
-            <div class="prog-step done"></div><div class="prog-step done"></div>
-            <div class="prog-step done"></div><div class="prog-step done"></div>
-            <span class="prog-label">4 de 4</span>
-          </div>
-          <div class="form-title">Histórico familiar</div>
-          <div class="form-sub">Alguém na família tem ou teve calvície? Selecione o tipo.</div>
-          <div id="fam-entradas"></div>
-          <button class="btn btn-secondary btn-sm" onclick="addFamEntrada()" style="margin-top:0">+ Adicionar familiar</button>
-          <div style="margin-top:20px;background:var(--cinza-1);border-radius:var(--r);padding:14px 16px">
-            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.6;color:var(--cinza-5)">
-              <input type="checkbox" id="p-decl" style="width:16px;height:16px;margin-top:2px;flex-shrink:0;accent-color:var(--verde-md)"/>
-              Declaro que as informações acima são verdadeiras e de minha responsabilidade.
-            </label>
-          </div>
-          <button class="btn btn-primary" onclick="submitPac()" style="margin-top:20px">Enviar para a clínica ✓</button>
-          <button class="btn btn-secondary" onclick="goStep(3)">← Voltar</button>
-        </div>
-      </div>
-
-      <div class="success-card" id="pac-ok">
-        <div style="font-size:48px;margin-bottom:12px">🌿</div>
-        <h2>Questionário enviado!</h2>
-        <p>A clínica recebeu seus dados.<br>Aguarde ser chamado pelo médico.</p>
-      </div>
-    </div><!-- /screen-pac -->
-
-    <!-- ══════════════════ MÉDICO ══════════════════ -->
-    <div class="screen" id="screen-med">
-
-      <!-- lista -->
-      <div id="med-lista">
-        <div class="form-title" style="margin-bottom:4px">Pacientes de hoje</div>
-        <div class="form-sub">Quinta-feira, 19 de março de 2026</div>
-        <div class="pac-card" onclick="openPac(0)">
-          <div class="pac-avatar">AB</div>
-          <div style="flex:1"><div class="pac-nome">Ana Beatriz Silva</div><div class="pac-hora">09:00 · Queda de cabelo</div></div>
-          <span class="tag tag-ok">Ficha ok</span>
-        </div>
-        <div class="pac-card" onclick="alert('Paciente não preencheu o questionário ainda.')">
-          <div class="pac-avatar" style="background:var(--am-bg);color:var(--am-tx)">RF</div>
-          <div style="flex:1"><div class="pac-nome">Rodrigo Ferreira</div><div class="pac-hora">10:30 · Primeira consulta</div></div>
-          <span class="tag tag-wait">Aguardando</span>
-        </div>
-        <div class="pac-card" onclick="openPac(1)">
-          <div class="pac-avatar">CM</div>
-          <div style="flex:1"><div class="pac-nome">Carla Menezes</div><div class="pac-hora">11:30 · Retorno</div></div>
-          <span class="tag tag-ok">Ficha ok</span>
-        </div>
-      </div>
-
-      <!-- prontuário -->
-      <div id="med-pront" style="display:none">
-        <button class="back-btn" onclick="closePac()">← Voltar à lista</button>
-        <div class="form-title" id="mp-nome">—</div>
-        <div class="form-sub" id="mp-hora">—</div>
-
-        <!-- sub-tabs -->
-        <div class="sub-tabs">
-          <button class="sub-tab active" id="st-quest" onclick="subTab('quest')">Questionário</button>
-          <button class="sub-tab" id="st-anam" onclick="subTab('anam')">Anamnese</button>
-          <button class="sub-tab" id="st-trico" onclick="subTab('trico')">Tricoscopia</button>
-        </div>
-
-        <!-- ── SUB: Questionário do paciente ── -->
-        <div id="sub-quest">
-          <div class="sec-head">Dados do paciente</div>
-          <div class="info-bloco">
-            <div class="info-row"><span class="info-label">Queixa</span><span class="info-val">Queda de cabelo, Falhas</span></div>
-            <div class="info-row"><span class="info-label">Tempo / Fios/dia</span><span class="info-val">3 meses · ~80 fios</span></div>
-            <div class="info-row"><span class="info-label">Evolução</span><span class="info-val">Aumentando</span></div>
-            <div class="info-row"><span class="info-label">Couro cabeludo</span><span class="info-val">Oleosidade, Coceira</span></div>
-            <div class="info-row"><span class="info-label">Tratamentos ant.</span><span class="info-val">Shampoo antiqueda, PRP</span></div>
-            <div class="info-row"><span class="info-label">Medicação</span><span class="info-val">Levotiroxina 50mcg</span></div>
-            <div class="info-row"><span class="info-label">Lava cabelo</span><span class="info-val">Todo dia</span></div>
-            <div class="info-row"><span class="info-label">Química</span><span class="info-val">Tintura · a cada 2 meses</span></div>
-            <div class="info-row"><span class="info-label">Hist. familiar</span><span class="info-val">Mãe – Tipo I-2</span></div>
-          </div>
-        </div>
-
-        <!-- ── SUB: Anamnese (Histórico Pessoal preenchido pelo médico) ── -->
-        <div id="sub-anam" style="display:none">
-
-          <div class="field">
-            <label>Queixa principal (registro médico)</label>
-            <textarea id="m-queixa" rows="3" placeholder="Descreva a queixa conforme relatada pelo paciente..."></textarea>
-          </div>
-
-          <div class="sec-head">Antecedentes pessoais</div>
-          <div class="dx-bloco">
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">1. Doenças Cardíacas</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Qual?"/></div></div>
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">2. Doenças Renais</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Qual?"/></div></div>
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">3. Doenças Cancerígenas</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Qual?"/></div></div>
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">4. Doenças Neurológicas</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Qual?"/></div></div>
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">5. Doenças Hematológicas</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Qual?"/></div></div>
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">6. Doenças Autoimunes</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Qual?"/></div></div>
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">7. Alergia a Medicamentos</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Quais?"/></div></div>
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">8. Internações / Cirurgias recentes</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><textarea rows="2" placeholder="Descreva..."></textarea></div></div>
-          </div>
-
-          <div class="field">
-            <label>9. Medicamentos em uso</label>
-            <textarea id="m-meds" rows="2" placeholder="Liste os medicamentos e doses..."></textarea>
-          </div>
-
-          <div class="sec-head">Para mulheres</div>
-          <div class="dx-bloco">
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">1. Doenças Ginecológicas</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Qual?"/></div></div>
-          </div>
-
-          <div class="field">
-            <label>2. Ciclo menstrual</label>
-            <div class="pill-group" id="pg-ciclo" data-type="radio">
-              <div class="pill" data-val="Regular" onclick="selPill(this)">Regular</div>
-              <div class="pill" data-val="Irregular" onclick="selPill(this)">Irregular</div>
-              <div class="pill" data-val="Climatério" onclick="selPill(this)">Climatério</div>
-              <div class="pill" data-val="Histerectomia" onclick="selPill(this)">Histerectomia</div>
-              <div class="pill" data-val="Menopausa" onclick="selPill(this)">Menopausa</div>
-            </div>
-          </div>
-
-          <div class="row2">
-            <div class="field">
-              <label>3. SOP</label>
-              <div class="pill-group" id="pg-sop" data-type="radio">
-                <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-                <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-              </div>
-            </div>
-            <div class="field"><label>Fluxo</label><input type="text" id="m-fluxo" placeholder="Descreva"/></div>
-          </div>
-
-          <div class="field">
-            <label>4. Método de prevenção</label>
-            <div class="pill-group" id="pg-prev" data-type="multi">
-              <div class="pill" data-val="Anticoncepcional" onclick="selPill(this)">Anticoncepcional</div>
-              <div class="pill" data-val="Chip da Beleza" onclick="selPill(this)">Chip da Beleza</div>
-              <div class="pill" data-val="Laqueadura" onclick="selPill(this)">Laqueadura</div>
-              <div class="pill" data-val="DIU" onclick="selPill(this)">DIU</div>
-              <div class="pill" data-val="Preservativo" onclick="selPill(this)">Preservativo</div>
-              <div class="pill" data-val="Reposição Hormonal" onclick="selPill(this)">Reposição Hormonal</div>
-              <div class="pill" data-val="Comp. Vasectomizado" onclick="selPill(this)">Comp. Vasectomizado</div>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>Quer engravidar?</label>
-            <div class="pill-group" id="pg-eng" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>5. Tem filhos?</label>
-            <div class="pill-group" id="pg-filhos" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-          </div>
-
-          <div class="sec-head">Hábitos e estilo de vida</div>
-          <div class="field">
-            <label>6. Alimentação</label>
-            <div class="pill-group" id="pg-alim" data-type="multi">
-              <div class="pill" data-val="Carne" onclick="selPill(this)">Carne</div>
-              <div class="pill" data-val="Frango" onclick="selPill(this)">Frango</div>
-              <div class="pill" data-val="Peixes" onclick="selPill(this)">Peixes</div>
-              <div class="pill" data-val="Ovos" onclick="selPill(this)">Ovos</div>
-              <div class="pill" data-val="Leite e Derivados" onclick="selPill(this)">Leite e Derivados</div>
-              <div class="pill" data-val="Carboidratos" onclick="selPill(this)">Carboidratos</div>
-              <div class="pill" data-val="Legumes" onclick="selPill(this)">Legumes</div>
-              <div class="pill" data-val="Verduras" onclick="selPill(this)">Verduras</div>
-              <div class="pill" data-val="Frutas" onclick="selPill(this)">Frutas</div>
-            </div>
-          </div>
-
-          <div class="row2">
-            <div class="field"><label>Água (litros/dia)</label><input type="text" id="m-agua" placeholder="Ex: 2L"/></div>
-          </div>
-
-          <div class="field">
-            <label>7. Peso últimos meses</label>
-            <div class="pill-group" id="pg-peso" data-type="radio">
-              <div class="pill" data-val="Ganhou peso" onclick="selPill(this)">Ganhou peso</div>
-              <div class="pill" data-val="Emagreceu" onclick="selPill(this)">Emagreceu</div>
-              <div class="pill" data-val="Mantendo" onclick="selPill(this)">Mantendo</div>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>8. Atividade física</label>
-            <div class="pill-group" id="pg-atv" data-type="radio">
-              <div class="pill" data-val="Não" onclick="selPill(this)">Não</div>
-              <div class="pill" data-val="Sim" onclick="selPill(this)">Sim</div>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>9. Hábito intestinal</label>
-            <div class="pill-group" id="pg-int" data-type="radio">
-              <div class="pill" data-val="Normal" onclick="selPill(this)">Normal</div>
-              <div class="pill" data-val="Constipado" onclick="selPill(this)">Constipado</div>
-              <div class="pill" data-val="Diarreico" onclick="selPill(this)">Diarreico</div>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>10. Antecedentes familiares</label>
-            <div class="pill-group" id="pg-antfam" data-type="multi">
-              <div class="pill" data-val="AAG" onclick="selPill(this)">AAG</div>
-              <div class="pill" data-val="Alopecia Areata" onclick="selPill(this)">Alopecia Areata</div>
-              <div class="pill" data-val="Alopecia Cicatricial" onclick="selPill(this)">Alopecia Cicatricial</div>
-            </div>
-            <input type="text" id="m-antfam-outras" placeholder="Outras..." style="margin-top:8px;padding:9px 12px;border:1.5px solid var(--cinza-3);border-radius:var(--rsm);font-family:'Inter',sans-serif;font-size:13px;background:var(--cinza-1);width:100%"/>
-          </div>
-
-          <button class="btn btn-secondary" onclick="subTab('trico')" style="margin-top:8px">Ir para Tricoscopia →</button>
-        </div>
-
-        <!-- ── SUB: Tricoscopia + Hipótese + Tratamento ── -->
-        <div id="sub-trico" style="display:none">
-
-          <div class="sec-head">Tricoscopia digital</div>
-          <div class="info-bloco" style="padding-bottom:4px">
-            <div class="field" style="margin-bottom:12px">
-              <label>1. Teste de tração</label>
-              <div class="pill-group" id="pg-trac" data-type="radio">
-                <div class="pill" data-val="Positivo" onclick="selPill(this)">Positivo</div>
-                <div class="pill" data-val="Negativo" onclick="selPill(this)">Negativo</div>
-              </div>
-            </div>
-            <div class="field" style="margin-bottom:12px">
-              <label>2. Haste</label>
-              <div class="pill-group" id="pg-haste" data-type="radio">
-                <div class="pill" data-val="Normal" onclick="selPill(this)">Normal</div>
-                <div class="pill" data-val="Ressecada" onclick="selPill(this)">Ressecada</div>
-              </div>
-            </div>
-            <div class="field" style="margin-bottom:12px">
-              <label>3. Miniaturização dos fios</label>
-              <div class="pill-group" id="pg-mini" data-type="radio">
-                <div class="pill" data-val="Ausente" onclick="selPill(this)">Ausente</div>
-                <div class="pill" data-val="Presente" onclick="selPill(this)">Presente</div>
-              </div>
-            </div>
-            <div class="field" style="margin-bottom:12px">
-              <label>4. Descamação</label>
-              <div class="pill-group" id="pg-desc" data-type="radio">
-                <div class="pill" data-val="Leve" onclick="selPill(this)">Leve</div>
-                <div class="pill" data-val="Moderada" onclick="selPill(this)">Moderada</div>
-                <div class="pill" data-val="Intensa" onclick="selPill(this)">Intensa</div>
-              </div>
-            </div>
-            <div style="margin-bottom:14px">
-              <div class="scale-inline">
-                <span class="scale-lbl">Hiperemia</span>
-                <div class="scale-row" id="sc-hip"></div>
-              </div>
-              <div class="scale-inline">
-                <span class="scale-lbl">Oleosidade</span>
-                <div class="scale-row" id="sc-ole"></div>
-              </div>
-              <div class="scale-inline">
-                <span class="scale-lbl">Cresc. fios</span>
-                <div class="scale-row" id="sc-cres"></div>
-              </div>
-            </div>
-            <div class="field" style="margin-bottom:10px">
-              <label>Lesões / observações</label>
-              <input type="text" id="t-obs" placeholder="Descreva..."/>
-            </div>
-            <div class="pill-group" id="pg-outros-trico" data-type="multi" style="margin-bottom:8px">
-              <div class="pill" data-val="Pelos cadavéricos" onclick="selPill(this)">Pelos cadavéricos</div>
-              <div class="pill" data-val="Falhas" onclick="selPill(this)">Falhas</div>
-            </div>
-          </div>
-
-          <div class="sec-head">Hipótese diagnóstica</div>
-          <div class="dx-bloco">
-            <div class="dx-row" id="dr-agg"><div class="dx-row-top"><span class="dx-nome">AGG</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Grau / observação"/></div></div>
-            <div class="dx-row" id="dr-aa"><div class="dx-row-top"><span class="dx-nome">Alopecia Areata</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Observação"/></div></div>
-            <div class="dx-row" id="dr-ac"><div class="dx-row-top"><span class="dx-nome">Alopecia Cicatricial</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Observação"/></div></div>
-            <div class="dx-row" id="dr-ds"><div class="dx-row-top"><span class="dx-nome">Dermatite Seborreica</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Observação"/></div></div>
-            <div class="dx-row" id="dr-ef"><div class="dx-row-top"><span class="dx-nome">Eflúvio</span><span class="rp" data-side="nao" onclick="selDx(this,'nao')">Não</span><span class="rp" data-side="sim" onclick="selDx(this,'sim')">Sim</span></div><div class="dx-detail"><input type="text" placeholder="Tipo (telógeno / anágeno)"/></div></div>
-            <div class="dx-row"><div class="dx-row-top"><span class="dx-nome">Outras hipóteses</span></div><div class="dx-detail"><input type="text" id="dx-outras" placeholder="Diagnósticos adicionais"/></div></div>
-          </div>
-
-          <div class="sec-head">Tratamento proposto</div>
-          <div class="trat-box">
-            <div class="trat-tit">Conduta médica</div>
-            <textarea id="m-trat" rows="5" placeholder="Ex: Minoxidil 5% 1mL 2x/dia&#10;Fórmula oral: Biotina 10mg + Zinco&#10;Mesoterapia 1x/mês · 4 meses&#10;Retorno em 60 dias"></textarea>
-          </div>
-
-          <button class="btn btn-save" onclick="salvarPront()">Salvar prontuário</button>
-          <button class="btn btn-pdf" onclick="gerarPDF()">📄 Gerar PDF para impressão</button>
-          <div class="loader-wrap" id="pdf-loader">
-            <div class="spinner"></div>
-            <div class="loader-txt">Gerando PDF…</div>
-          </div>
-        </div>
-
-      </div><!-- /med-pront -->
-    </div><!-- /screen-med -->
-
-  </div><!-- /content -->
-
-<!-- ── MODAL SENHA ── -->
-<div id="modal-senha" style="
-  display:none; position:fixed; inset:0; z-index:500;
-  background:rgba(1,52,37,.7); backdrop-filter:blur(4px);
-  align-items:center; justify-content:center;
-">
-  <div style="
-    background:#fff; border-radius:16px; padding:32px 28px;
-    width:300px; box-shadow:0 20px 60px rgba(0,0,0,.3); text-align:center;
-  ">
-    <div style="font-size:32px; margin-bottom:12px">🔒</div>
-    <div style="font-family:'Inter',sans-serif; font-size:17px; font-weight:700; color:#013425; margin-bottom:6px">Área Médica</div>
-    <div style="font-family:'Inter',sans-serif; font-size:13px; color:#888; margin-bottom:20px">Digite a senha para continuar</div>
-    <input
-      type="password" id="input-senha"
-      placeholder="••••••"
-      onkeydown="if(event.key==='Enter')confirmarSenha()"
-      style="
-        width:100%; padding:12px 16px; font-size:16px; letter-spacing:4px;
-        border:1.5px solid #d1d5db; border-radius:10px; outline:none;
-        font-family:'Inter',sans-serif; text-align:center; margin-bottom:8px;
-      "
-    />
-    <div id="senha-erro" style="font-size:12px; color:#dc2626; min-height:18px; margin-bottom:12px"></div>
-    <button onclick="confirmarSenha()" style="
-      width:100%; padding:13px; border-radius:10px; border:none;
-      background:#C5A365; color:#fff; font-family:'Inter',sans-serif;
-      font-size:14px; font-weight:700; cursor:pointer; margin-bottom:10px;
-    ">Entrar</button>
-    <button onclick="fecharSenha()" style="
-      width:100%; padding:10px; border-radius:10px; border:1.5px solid #e8ece9;
-      background:#fff; color:#666; font-family:'Inter',sans-serif;
-      font-size:13px; cursor:pointer;
-    ">Cancelar</button>
+    <!-- CADASTRO -->
+    <div id="form-reg" style="display:none">
+      <div class="field"><label class="form-label">Nome do Time</label><input id="r-time" type="text" class="form-input" placeholder="Ex: Invasão FC"></div>
+      <div class="field"><label class="form-label">Seu nome (treinador)</label><input id="r-nome" type="text" class="form-input" placeholder="Ex: Carlos"></div>
+      <div class="field"><label class="form-label">E-mail</label><input id="r-email" type="email" class="form-input" placeholder="seu@email.com" autocomplete="email"></div>
+      <div class="field"><label class="form-label">Senha (mín. 6 caracteres)</label><input id="r-senha" type="password" class="form-input" placeholder="••••••••" autocomplete="new-password"></div>
+      <button class="btn-main" id="btn-reg" onclick="fazerCadastro()">CRIAR CONTA</button>
+    </div>
+    <div id="auth-err" style="color:var(--red);font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;text-align:center;margin-top:10px;min-height:20px"></div>
   </div>
 </div>
 
-</div><!-- /shell -->
-<div class="toast" id="toast"></div>
+<!-- MASTER PANEL -->
+<div id="master-screen" class="fullscreen hidden" style="align-items:stretch;overflow-y:auto;padding:0">
+  <div style="position:sticky;top:0;z-index:10;background:var(--app-bg);border-bottom:2px solid var(--accent);padding:calc(var(--safe-top) + 14px) 14px 14px;display:flex;align-items:center;gap:10px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--accent);letter-spacing:3px;flex:1">PROFESSÔ</div>
+    <span style="font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:800;padding:3px 8px;border-radius:5px;letter-spacing:1px;background:var(--blue);color:#fff">MASTER</span>
+    <button class="icon-btn" onclick="fazerLogout()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+  </div>
+  <div style="padding:16px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:2px;color:var(--muted);margin-bottom:10px">TODOS OS TIMES</div>
+    <div id="master-list"><div class="empty">Carregando...</div></div>
+  </div>
+</div>
 
-<script>
-// 1. Carregar o SDK do Supabase const { createClient } = supabase; // 2. Inicializar (substitua pelos seus valores) const sb = https://yxoedniamdyvoefmfrip.supabase.co; // 3. Salvar quando paciente enviar async function salvarQuestionario(dados) { const { error } = await sb .from('questionario') .insert(dados); if (error) console.error(error); }
-// ── data automática ──────────────────────────────────
-const hoje = new Date();
-document.getElementById('p-data').value =
-  hoje.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'});
+<!-- APP PRINCIPAL -->
+<header class="hdr" id="main-hdr" style="display:none">
+  <div class="hdr-logo" id="hdr-logo">PROFESSÔ<small id="hdr-team"></small></div>
+  <div id="real-clock" style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--muted);line-height:1;flex-shrink:0"></div>
+  <div id="sync-dot" style="width:8px;height:8px;border-radius:50%;background:#27ae60;flex-shrink:0;transition:background .3s"></div>
+  <span class="role-badge" id="role-badge" style="background:#333;color:var(--muted)">VISITANTE</span>
+  <div style="display:flex;gap:5px">
+    <button class="icon-btn admin-only" onclick="openSubModal()" title="Substituição"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
+    <button class="icon-btn" onclick="fazerLogout()" title="Sair"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+  </div>
+</header>
 
-// ── tabs ─────────────────────────────────────────────
-function switchTab(t) {
-  ['pac','med'].forEach(x => {
-    document.getElementById('tab-'+x).classList.toggle('active', x===t);
-    document.getElementById('screen-'+x).classList.toggle('active', x===t);
-  });
-}
-
-// ── sub-tabs médico ───────────────────────────────────
-function subTab(t) {
-  ['quest','anam','trico'].forEach(x => {
-    document.getElementById('st-'+x).classList.toggle('active', x===t);
-    document.getElementById('sub-'+x).style.display = x===t ? 'block' : 'none';
-  });
-  window.scrollTo({top:0, behavior:'smooth'});
-}
-
-// ── steps ─────────────────────────────────────────────
-let currentStep = 1;
-function goStep(n) {
-  document.getElementById('step'+currentStep).style.display = 'none';
-  currentStep = n;
-  document.getElementById('step'+n).style.display = 'block';
-  window.scrollTo({top:0, behavior:'smooth'});
-}
-
-// ── pill universal ────────────────────────────────────
-function selPill(pill) {
-  const g = pill.closest('.pill-group');
-  const tipo = g.getAttribute('data-type');
-  if (tipo === 'radio') {
-    g.querySelectorAll('.pill').forEach(p => p.classList.remove('sel'));
-    pill.classList.add('sel');
-  } else {
-    pill.classList.toggle('sel');
-  }
-  // side-effects
-  const id = g.id;
-  const v = getVal(id);
-  if (id==='pg-conv')   toggle('p-conv-qual',  v==='Sim');
-  if (id==='pg-crise')  toggle('p-crise-q',    v==='Sim');
-  if (id==='pg-tratou') toggle('p-trat-q',     v==='Sim');
-  if (id==='pg-med')    toggle('p-med-q',      v==='Sim');
-  if (id==='pg-quim')   toggle('quim-detail',  v==='Sim');
-  if (id==='pg-chap')   toggle('p-chap-freq',  v==='Sim');
-  if (id==='pg-along')  toggle('p-along-t',    v==='Sim');
-}
-function toggle(id, show) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = show ? 'block' : 'none';
-}
-function getVal(gid) {
-  const s = document.querySelector('#'+gid+' .pill.sel');
-  return s ? s.getAttribute('data-val') : '';
-}
-function getVals(gid) {
-  return [...document.querySelectorAll('#'+gid+' .pill.sel')].map(p => p.getAttribute('data-val'));
-}
-
-// ── queda onde ────────────────────────────────────────
-const quedaState = {};
-function selSN(btn, key, val) {
-  btn.closest('.sn-pair').querySelectorAll('.sn-btn').forEach(b => b.classList.remove('sel-s','sel-n'));
-  btn.classList.add(val==='S' ? 'sel-s' : 'sel-n');
-  quedaState[key] = val==='S' ? 'Sim' : 'Não';
-}
-
-// ── toggle dx (anamnese): padrão = Não visível, Sim oculto
-//    ao clicar Sim: some o Não, fica só Sim
-//    ao clicar Não (voltar): some o Sim, fica só Não
-function selDx(el, tipo) {
-  const row = el.closest('.dx-row');
-  const btnNao = row.querySelector('.rp[data-side="nao"]');
-  const btnSim = row.querySelector('.rp[data-side="sim"]');
-  const detail = row.querySelector('.dx-detail');
-
-  function resetDx() {
-    // volta os dois botões, sem seleção, sem detalhe
-    btnNao.style.display = 'inline-flex';
-    btnSim.style.display = 'inline-flex';
-    btnNao.classList.remove('sel-nao','sel-sim');
-    btnSim.classList.remove('sel-sim','sel-nao');
-    // remove × de ambos
-    [btnNao, btnSim].forEach(b => { const x = b.querySelector('.rp-x'); if(x) x.remove(); });
-    if (detail) detail.style.display = 'none';
-  }
-
-  function addX(btn) {
-    // remove × existentes antes de adicionar
-    [btnNao, btnSim].forEach(b => { const x = b.querySelector('.rp-x'); if(x) x.remove(); });
-    const x = document.createElement('span');
-    x.className = 'rp-x';
-    x.textContent = '×';
-    x.onclick = function(e) { e.stopPropagation(); resetDx(); };
-    btn.appendChild(x);
-  }
-
-  if (tipo === 'sim') {
-    btnNao.style.display = 'none';
-    btnSim.style.display = 'inline-flex';
-    btnSim.classList.add('sel-sim');
-    btnSim.classList.remove('sel-nao');
-    addX(btnSim);
-    if (detail) detail.style.display = 'block';
-  } else {
-    btnSim.style.display = 'none';
-    btnSim.classList.remove('sel-sim');
-    btnNao.style.display = 'inline-flex';
-    btnNao.classList.add('sel-nao');
-    btnNao.classList.remove('sel-sim');
-    addX(btnNao);
-    if (detail) detail.style.display = 'none';
-  }
-}
-
-
-
-// ── escalas /4 ────────────────────────────────────────
-['hip','ole','cres'].forEach(key => {
-  const w = document.getElementById('sc-'+key);
-  for (let i=0; i<=4; i++) {
-    const b = document.createElement('button');
-    b.className='scale-btn'; b.textContent=i; b.type='button';
-    b.onclick = () => { w.querySelectorAll('.scale-btn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); };
-    w.appendChild(b);
-  }
-});
-
-// ── SVG calvície ──────────────────────────────────────
-function svgM(flags) {
-  let p = `<ellipse cx="22" cy="26" rx="18" ry="22" fill="#F5E6D0" stroke="#C9AA8A" stroke-width="1"/>`;
-  if (!flags.includes('f-total')) {
-    const ry = flags.includes('f-forte') ? 9  : flags.includes('f-mod') ? 13 : flags.includes('f-leve') ? 17 : 20;
-    const cy = flags.includes('f-forte') ? 40 : flags.includes('f-mod') ? 37 : flags.includes('f-leve') ? 34 : 30;
-    p += `<ellipse cx="22" cy="${cy}" rx="14" ry="${ry}" fill="#4A2C1A" opacity=".8"/>`;
-  }
-  if (flags.includes('v-sm'))  p += `<ellipse cx="22" cy="24" rx="5"  ry="5"  fill="#F5E6D0" stroke="#C9AA8A" stroke-width=".5"/>`;
-  if (flags.includes('v-md'))  p += `<ellipse cx="22" cy="24" rx="9"  ry="9"  fill="#F5E6D0" stroke="#C9AA8A" stroke-width=".5"/>`;
-  if (flags.includes('v-lg'))  p += `<ellipse cx="22" cy="24" rx="13" ry="13" fill="#F5E6D0" stroke="#C9AA8A" stroke-width=".5"/>`;
-  if (flags.includes('v-xl'))  p += `<ellipse cx="22" cy="24" rx="15" ry="17" fill="#F5E6D0" stroke="#C9AA8A" stroke-width=".5"/>`;
-  if (flags.includes('f-mid')) p += `<rect x="9" y="6" width="26" height="9" rx="3" fill="#F5E6D0" opacity=".9"/>`;
-  return `<svg viewBox="0 0 44 52" width="38" height="46" xmlns="http://www.w3.org/2000/svg">${p}</svg>`;
-}
-
-function svgF(w) {
-  // w = largura da zona de afinamento central (0..32)
-  let p = `<ellipse cx="22" cy="28" rx="18" ry="22" fill="#F5E6D0" stroke="#C9AA8A" stroke-width="1"/>`;
-  p += `<path d="M4,20 Q4,6 22,6 Q40,6 40,20 Q38,13 22,13 Q6,13 4,20Z" fill="#4A2C1A" opacity=".8"/>`;
-  if (w > 0) p += `<rect x="${22-w/2}" y="6" width="${w}" height="28" rx="2" fill="#F0D8BE" opacity=".9"/>`;
-  p += `<line x1="22" y1="5" x2="22" y2="33" stroke="#C9AA8A" stroke-width=".8" stroke-dasharray="2,2"/>`;
-  return `<svg viewBox="0 0 44 52" width="38" height="46" xmlns="http://www.w3.org/2000/svg">${p}</svg>`;
-}
-
-const tiposM = [
-  {label:'Tipo I',    svg: svgM([])},
-  {label:'Tipo II',   svg: svgM(['f-leve'])},
-  {label:'Tipo IIa',  svg: svgM(['f-leve','f-mid'])},
-  {label:'Tipo III',  svg: svgM(['f-mod'])},
-  {label:'Tipo IIIv', svg: svgM(['f-mod','v-sm'])},
-  {label:'Tipo IV',   svg: svgM(['f-mod','v-md'])},
-  {label:'Tipo IVa',  svg: svgM(['f-forte'])},
-  {label:'Tipo V',    svg: svgM(['f-forte','v-lg'])},
-  {label:'Tipo VI',   svg: svgM(['f-total','v-lg'])},
-  {label:'Tipo VII',  svg: svgM(['f-total','v-xl'])},
-];
-const tiposF = [
-  {label:'I-1',    svg: svgF(3)},
-  {label:'I-2',    svg: svgF(7)},
-  {label:'I-3',    svg: svgF(12)},
-  {label:'I-4',    svg: svgF(17)},
-  {label:'II-1',   svg: svgF(20)},
-  {label:'II-2',   svg: svgF(24)},
-  {label:'III',    svg: svgF(28)},
-  {label:'Frontal',svg: svgF(32)},
-];
-
-// ── familiar ──────────────────────────────────────────
-let famCount = 0;
-const famData = {};
-
-function addFamEntrada() {
-  const id = 'fam' + (++famCount);
-  famData[id] = {parentesco:'', sexo:'', tipo:''};
-  const w = document.createElement('div');
-  w.className = 'fam-entrada'; w.id = id;
-  w.innerHTML = `
-    <div class="fam-top">
-      <input type="text" placeholder="Parentesco (ex: Mãe)" oninput="famData['${id}'].parentesco=this.value"/>
-      <div></div>
-    </div>
-    <div style="margin-bottom:8px">
-      <div class="lbl" style="margin-bottom:6px">Sexo</div>
-      <div class="pill-group" data-type="radio" style="gap:8px">
-        <div class="pill" data-val="M" onclick="setFamSexo('${id}','M',this)">Masculino</div>
-        <div class="pill" data-val="F" onclick="setFamSexo('${id}','F',this)">Feminino</div>
+<div class="app-body" id="main-body" style="display:none">
+  <!-- CAMPO -->
+  <div id="s-campo" class="screen active">
+    <div class="chrono-wrap">
+      <div class="period-row">
+        <button class="pbtn on" id="pb1" onclick="setPeriod(1)">1º Tempo</button>
+        <button class="pbtn" id="pbHT" onclick="setPeriod('ht')" style="flex:.6">Intervalo</button>
+        <button class="pbtn" id="pb2" onclick="setPeriod(2)">2º Tempo</button>
+      </div>
+      <div class="chrono-time" id="chrono">00:00</div>
+      <div class="chrono-btns">
+        <button class="cbtn cbtn-go admin-only" id="btn-go" onclick="toggleChrono()">▶ INICIAR</button>
+        <button class="cbtn cbtn-reset admin-only" onclick="resetChrono()">↺</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+        <div class="cm-pill">Tempo: <b id="dur-label">40min</b></div>
+        <div class="cm-pill">Em campo: <b id="on-count">0</b></div>
       </div>
     </div>
-    <div id="${id}-tipos" style="display:none">
-      <div class="lbl" style="margin-bottom:8px">Selecione o tipo de calvície</div>
-      <div id="${id}-grid" class="tipos-grid"></div>
+    <div class="alert-bar" id="alert-bar">
+      <div class="alert-bar-title">⚠️ Precisam jogar mais</div>
+      <div class="warn-chips" id="warn-chips"></div>
     </div>
-    <div class="fam-sel" id="${id}-sel">Nenhum tipo selecionado</div>
-  `;
-  document.getElementById('fam-entradas').appendChild(w);
-}
+    <div class="campo-wrap">
+      <div class="campo" id="campo">
+        <div class="campo-lines">
+          <svg viewBox="0 0 680 1050" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <rect x="10" y="10" width="660" height="1030" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="5"/>
+            <line x1="10" y1="525" x2="670" y2="525" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <circle cx="340" cy="525" r="88" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <circle cx="340" cy="525" r="6" fill="rgba(255,255,255,.55)"/>
+            <rect x="255" y="10" width="170" height="22" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <rect x="155" y="10" width="370" height="155" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <circle cx="340" cy="125" r="5" fill="rgba(255,255,255,.55)"/>
+            <rect x="255" y="1018" width="170" height="22" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <rect x="155" y="885" width="370" height="155" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <circle cx="340" cy="925" r="5" fill="rgba(255,255,255,.55)"/>
+          </svg>
+        </div>
+        <div id="campo-players"></div>
+      </div>
+    </div>
+    <div class="bench-card">
+      <div class="bench-label">
+        <span style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted)"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>BANCO</span>
+        <span id="bench-cnt" style="font-size:.75rem;color:var(--muted)"></span>
+      </div>
+      <div class="bench-grid" id="bench-grid"><div class="empty" style="width:100%">Nenhum no banco</div></div>
+    </div>
+  </div>
 
-function setFamSexo(id, sexo, pill) {
-  pill.closest('.pill-group').querySelectorAll('.pill').forEach(p => p.classList.remove('sel'));
-  pill.classList.add('sel');
-  famData[id].sexo = sexo; famData[id].tipo = '';
-  document.getElementById(id+'-sel').innerHTML = 'Nenhum tipo selecionado';
-  const grid = document.getElementById(id+'-grid');
-  grid.innerHTML = '';
-  const tipos = sexo === 'M' ? tiposM : tiposF;
-  tipos.forEach(t => {
-    const c = document.createElement('div');
-    c.className = 'tipo-card';
-    c.innerHTML = t.svg + `<div class="tlbl">${t.label}</div>`;
-    c.onclick = () => {
-      grid.querySelectorAll('.tipo-card').forEach(x => x.classList.remove('sel'));
-      c.classList.add('sel');
-      famData[id].tipo = t.label;
-      const par = famData[id].parentesco || 'Familiar';
-      document.getElementById(id+'-sel').innerHTML = `<span>${par} – ${t.label}</span>`;
-    };
-    grid.appendChild(c);
+  <!-- MINUTAGEM -->
+  <div id="s-min" class="screen">
+    <div class="card">
+      <div class="card-title">⏱ MINUTAGEM</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;line-height:1.6">Meta: <strong style="color:var(--text)" id="min-dur-label">40min</strong> por jogador.</div>
+      <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--muted)"><div style="width:9px;height:9px;border-radius:50%;background:#27ae60"></div>Em campo</div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--muted)"><div style="width:9px;height:9px;border-radius:50%;background:#f0b429"></div>Já jogou</div>
+        <div style="display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--muted)"><div style="width:9px;height:9px;border-radius:50%;background:#e74c3c"></div>Não entrou</div>
+      </div>
+      <div id="min-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 SUBSTITUIÇÕES</div>
+      <div id="sub-log"><div class="empty">Nenhuma substituição</div></div>
+    </div>
+  </div>
+
+  <!-- ELENCO -->
+  <div id="s-elenco" class="screen admin-only">
+    <div class="card">
+      <div class="card-title" id="form-title">➕ NOVO JOGADOR</div>
+      <div class="field"><label class="form-label">Nome</label><input type="text" id="f-nome" class="form-input" placeholder="Nome do atleta"></div>
+      <div class="row2">
+        <div class="field"><label class="form-label">Posição</label>
+          <select id="f-pos" class="form-input">
+            <option value="G">Goleiro (G)</option><option value="DF">Zagueiro (DF)</option>
+            <option value="LAT">Lateral (LAT)</option><option value="MC">Meio-Campo (MC)</option>
+            <option value="PT">Ponta (PT)</option><option value="AT">Atacante (AT)</option>
+          </select>
+        </div>
+        <div class="field"><label class="form-label">Nº Camisa</label><input type="number" id="f-num" class="form-input" placeholder="10" min="1" max="99"></div>
+      </div>
+      <input type="hidden" id="f-edit-id">
+      <button class="btn-main" id="btn-save-player" onclick="savePlayer()">SALVAR JOGADOR</button>
+      <button class="btn-ghost" id="btn-cancel-edit" onclick="cancelEditPlayer()" style="display:none">CANCELAR</button>
+    </div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:2px;color:var(--muted);margin:4px 0 8px 2px">ELENCO</div>
+    <div class="card" id="roster-list"><div class="empty">Nenhum atleta</div></div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="s-cfg" class="screen">
+    <div class="card admin-only">
+      <div class="card-title">🎨 CORES DO TIME</div>
+      <div class="color-grid">
+        <div class="color-swatch" onclick="document.getElementById('pick-kit').click()"><div class="swatch-preview" id="sw-kit"></div><div><div class="swatch-label">Camisa</div><div class="swatch-hex" id="sw-kit-hex">#111111</div></div><input type="color" id="pick-kit" value="#111111" oninput="applyColor('kit',this.value)"></div>
+        <div class="color-swatch" onclick="document.getElementById('pick-kit-txt').click()"><div class="swatch-preview" id="sw-kit-txt"></div><div><div class="swatch-label">Texto kit</div><div class="swatch-hex" id="sw-kit-txt-hex">#ffffff</div></div><input type="color" id="pick-kit-txt" value="#ffffff" oninput="applyColor('kit-text',this.value)"></div>
+        <div class="color-swatch" onclick="document.getElementById('pick-accent').click()"><div class="swatch-preview" id="sw-accent"></div><div><div class="swatch-label">Destaque</div><div class="swatch-hex" id="sw-accent-hex">#ff6600</div></div><input type="color" id="pick-accent" value="#ff6600" oninput="applyColor('accent',this.value)"></div>
+        <div class="color-swatch" onclick="document.getElementById('pick-field').click()"><div class="swatch-preview" id="sw-field"></div><div><div class="swatch-label">Campo</div><div class="swatch-hex" id="sw-field-hex">#1e6b1e</div></div><input type="color" id="pick-field" value="#1e6b1e" oninput="applyColor('field',this.value)"></div>
+      </div>
+    </div>
+    <div class="card admin-only">
+      <div class="card-title">⚙️ JOGO</div>
+      <div class="cfg-row">
+        <span class="cfg-label">Duração por tempo</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="changeDur(-5)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:1rem">−</button>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:.9rem;color:var(--accent);font-weight:700" id="dur-cfg">40 min</span>
+          <button onclick="changeDur(5)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:1rem">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="card admin-only" style="border-color:rgba(231,76,60,.2)">
+      <div class="card-title" style="color:var(--red);border-color:var(--red)">⚠️ RESETAR PARTIDA</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Zera cronômetro, minutagem e subs. Jogadores mantidos.</div>
+      <button onclick="resetMatch()" style="width:100%;padding:13px;background:rgba(231,76,60,.15);color:var(--red);border:1.5px solid rgba(231,76,60,.3);border-radius:11px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer">RESETAR PARTIDA</button>
+    </div>
+    <div class="card">
+      <div class="card-title">👤 CONTA</div>
+      <div class="cfg-row"><span class="cfg-label">E-mail</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:.85rem;color:var(--muted)" id="cfg-email">—</span></div>
+      <div class="cfg-row" style="border:none"><span class="cfg-label">Time</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:.85rem;color:var(--accent);font-weight:700" id="cfg-team">—</span></div>
+      <button onclick="fazerLogout()" style="width:100%;margin-top:10px;padding:12px;background:var(--card2);color:var(--muted);border:1px solid var(--border);border-radius:11px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1.5px;cursor:pointer">SAIR DA CONTA</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="main-nav" style="display:none">
+  <button class="nb on" id="nb-campo" onclick="goScreen('campo',this)"><span class="nb-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="1"/><line x1="2" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="3"/><line x1="9" y1="3" x2="9" y2="6"/><line x1="15" y1="3" x2="15" y2="6"/><line x1="9" y1="18" x2="9" y2="21"/><line x1="15" y1="18" x2="15" y2="21"/></svg></span>Campo</button>
+  <button class="nb" id="nb-min" onclick="goScreen('min',this)"><span class="nb-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 14.5 15.5"/><line x1="9" y1="3" x2="15" y2="3"/><line x1="12" y1="3" x2="12" y2="5"/></svg></span>Tempo</button>
+  <button class="nb admin-only" id="nb-elenco" onclick="goScreen('elenco',this)"><span class="nb-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="16" y1="8" x2="22" y2="8"/><line x1="16" y1="12" x2="22" y2="12"/><line x1="16" y1="16" x2="20" y2="16"/></svg></span>Elenco</button>
+  <button class="nb" id="nb-cfg" onclick="goScreen('cfg',this)"><span class="nb-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Config</button>
+</nav>
+
+<!-- MODAIS -->
+<div class="overlay" id="modal-slot" onclick="closeBg(event,'modal-slot')"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-title" id="slot-title">Posição</div><div class="sheet-sub" id="slot-sub"></div><div id="slot-list"></div><div class="modal-btns"><button class="mbtn mbtn-ghost" onclick="closeModal('modal-slot')">CANCELAR</button><button class="mbtn mbtn-del" id="slot-remove-btn" onclick="removeFromSlot()">TIRAR</button><button class="mbtn mbtn-ok" onclick="confirmSlot()">ESCALAR</button></div></div></div>
+<div class="overlay" id="modal-sub" onclick="closeBg(event,'modal-sub')"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-title">🔄 SUBSTITUIÇÃO</div><div class="sheet-sub">Quem sai e quem entra</div><div style="font-family:'Bebas Neue',sans-serif;font-size:.82rem;letter-spacing:1px;color:var(--muted);margin-bottom:6px">SAI DE CAMPO</div><div id="sub-out-list"></div><div style="font-family:'Bebas Neue',sans-serif;font-size:.82rem;letter-spacing:1px;color:var(--muted);margin:10px 0 6px">ENTRA EM CAMPO</div><div id="sub-in-list"></div><div class="modal-btns"><button class="mbtn mbtn-ghost" onclick="closeModal('modal-sub')">CANCELAR</button><button class="mbtn mbtn-ok" onclick="confirmSub()">CONFIRMAR</button></div></div></div>
+<div class="overlay" id="modal-player" onclick="closeBg(event,'modal-player')"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-title" id="pm-name"></div><div class="sheet-sub" id="pm-sub"></div><div id="pm-content"></div><div class="modal-btns" style="margin-top:14px"><button class="mbtn mbtn-ghost" onclick="closeModal('modal-player')">FECHAR</button><button class="mbtn mbtn-ok admin-only" onclick="openSubFromPlayer()">🔄 SUBSTITUIR</button></div></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getFirestore,doc,collection,onSnapshot,setDoc,addDoc,deleteDoc,serverTimestamp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signInAnonymously,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const FB={apiKey:"AIzaSyD653TFNExvUuAEKHRgI8AfLQsuGdIf2QU",authDomain:"professo-a4622.firebaseapp.com",projectId:"professo-a4622",storageBucket:"professo-a4622.firebasestorage.app",messagingSenderId:"1047482697386",appId:"1:1047482697386:web:e58908265af0b4cf9972d3"};
+const MASTER_EMAIL="eduhermann@gmail.com";
+const fbApp=initializeApp(FB);
+const db=getFirestore(fbApp);
+const auth=getAuth(fbApp);
+
+// Posições fixas do campo
+const SLOTS=[{n:1,x:50,y:91},{n:2,x:28,y:79},{n:3,x:72,y:79},{n:4,x:10,y:67},{n:5,x:50,y:73},{n:6,x:90,y:67},{n:7,x:10,y:40},{n:8,x:33,y:34},{n:9,x:50,y:20},{n:10,x:67,y:34},{n:11,x:90,y:40}];
+
+// Estado
+let uid=null,isMaster=false,isAdmin=false,isVisitor=false,teamName='';
+let players=[],slotMap={},match={period:1,running:false,elapsed:0,duration:40,subs:[]};
+let colors={kit:'#111111','kit-text':'#ffffff',accent:'#ff6600',field:'#1e6b1e'};
+let chronoStart=null,chronoTick=null;
+let unsubP=null,unsubM=null,unsubS=null;
+let activeSlotN=null,slotPickId=null,subOutId=null,subInId=null,playerModalId=null;
+
+// Refs
+const teamDoc=(u)=>doc(db,'teams',u);
+const playersCol=(u)=>collection(db,'teams',u,'players');
+const matchDoc=(u)=>doc(db,'teams',u,'game','match');
+const settingsDoc=(u)=>doc(db,'teams',u,'game','settings');
+
+// Camadas
+function showLayer(id){
+  ['splash','auth-screen','master-screen'].forEach(x=>{
+    const el=document.getElementById(x);
+    if(el)el.classList.toggle('hidden',x!==id);
   });
-  document.getElementById(id+'-tipos').style.display = 'block';
+  const isApp=id==='app';
+  ['main-hdr','main-body','main-nav'].forEach(x=>{
+    const el=document.getElementById(x);
+    if(el)el.style.display=isApp?(x==='main-body'?'block':'flex'):'none';
+  });
+  if(id!=='splash'){document.getElementById('splash').classList.add('hidden');}
 }
 
-addFamEntrada();
-addFamEntrada();
+function setSyncDot(s){const el=document.getElementById('sync-dot');if(!el)return;el.style.background=s==='ok'?'#27ae60':s==='saving'?'#f0b429':'#e74c3c';}
 
-// ── submit paciente ───────────────────────────────────
-function submitPac() {
-  if (!document.getElementById('p-decl').checked) { showToast('Marque a declaração de veracidade'); return; }
-  document.getElementById('pac-form').style.display = 'none';
-  document.getElementById('pac-ok').style.display = 'block';
-  showToast('Questionário enviado!');
+// Boot
+function boot(){showLayer('splash');startRealClock();onAuthStateChanged(auth,onAuth);}
+boot();
+
+async function onAuth(user){
+  stopListeners();
+  if(!user){showLayer('auth-screen');return;}
+  if(user.email===MASTER_EMAIL&&!user.isAnonymous){isMaster=true;isAdmin=false;isVisitor=false;loadMasterPanel();return;}
+  if(user.isAnonymous){showLayer('auth-screen');showToast('Visitante: entre com o e-mail do treinador');return;}
+  isAdmin=true;isVisitor=false;isMaster=false;uid=user.uid;
+  startListeners(uid);
+  applyRole();showLayer('app');
 }
 
-// ── médico ────────────────────────────────────────────
-const pacientes = [
-  {nome:'Ana Beatriz Silva', hora:'09:00 · Queda de cabelo'},
-  {nome:'Carla Menezes',     hora:'11:30 · Retorno'},
-];
-function openPac(idx) {
-  document.getElementById('med-lista').style.display = 'none';
-  document.getElementById('med-pront').style.display = 'block';
-  document.getElementById('mp-nome').textContent = pacientes[idx].nome;
-  document.getElementById('mp-hora').textContent = pacientes[idx].hora;
-  subTab('quest');
-  window.scrollTo({top:0, behavior:'smooth'});
-}
-function closePac() {
-  document.getElementById('med-pront').style.display = 'none';
-  document.getElementById('med-lista').style.display = 'block';
-}
-function salvarPront() { showToast('Prontuário salvo com sucesso!'); }
-
-// ── gerar PDF ─────────────────────────────────────────
-async function gerarPDF() {
-  document.getElementById('pdf-loader').style.display = 'flex';
-  await loadJsPDF();
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
-
-  const W=210, PX=15;
-  const VERDE=[1,52,37], GOLD=[197,163,101], GOLD_CLR=[253,245,232];
-  const CINZA_BG=[248,249,248], CINZA_BD=[220,224,221];
-  let y = 0;
-
-  // ── helpers ──────────────────────────────────────────
-  function checkPage(needed=20) {
-    if (y + needed > 278) { doc.addPage(); y = 15; }
-  }
-
-  function cabecalho() {
-    doc.setFillColor(...VERDE); doc.rect(0,0,W,24,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(255,255,255);
-    doc.text('TricoMaster', PX, 13);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...GOLD);
-    doc.text('Medicina Capilar', PX, 19.5);
-    doc.setTextColor(255,255,255);
-    doc.text('PRONTUÁRIO · '+hoje.toLocaleDateString('pt-BR'), W-PX, 13, {align:'right'});
-    y = 32;
-  }
-
-  function pacHeader(nome, hora) {
-    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(20,20,20);
-    doc.text(nome, PX, y);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(120,120,120);
-    doc.text(hora, PX, y+6);
-    y += 13;
-    doc.setDrawColor(...GOLD); doc.setLineWidth(0.8); doc.line(PX,y,W-PX,y);
-    y += 7;
-  }
-
-  function secHead(txt) {
-    checkPage(14);
-    doc.setFillColor(...VERDE); doc.roundedRect(PX,y,W-PX*2,7,2,2,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
-    doc.text(txt, PX+4, y+5); y += 11;
-  }
-
-  function bloco(pares) {
-    // calc total height first
-    let th = 6;
-    pares.forEach(([,v]) => {
-      th += Math.max(doc.splitTextToSize(String(v||'—'), W-PX-68).length*5, 6) + 2;
-    });
-    checkPage(th+6);
-    doc.setFillColor(...CINZA_BG); doc.roundedRect(PX,y-1,W-PX*2,th+4,3,3,'F');
-    doc.setDrawColor(...CINZA_BD); doc.setLineWidth(0.3); doc.roundedRect(PX,y-1,W-PX*2,th+4,3,3,'D');
-    pares.forEach(([l,v]) => {
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(130,130,130);
-      doc.text(l, PX+4, y+4);
-      const lines = doc.splitTextToSize(String(v||'—'), W-PX-68);
-      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(25,25,25);
-      doc.text(lines, 76, y+4);
-      const rh = Math.max(lines.length*5, 6)+2;
-      // separator line
-      doc.setDrawColor(...CINZA_BD); doc.setLineWidth(0.2);
-      doc.line(PX+2, y+rh+1, W-PX-2, y+rh+1);
-      y += rh;
-    });
-    y += 7;
-  }
-
-  function blocoVerde(txt) {
-    const lines = doc.splitTextToSize(txt||'Não informado', W-PX*2-12);
-    const th = lines.length*5.5 + 12;
-    checkPage(th+4);
-    doc.setFillColor(...GOLD_CLR);
-    doc.roundedRect(PX,y-1,W-PX*2,th,3,3,'F');
-    doc.setDrawColor(...GOLD); doc.setLineWidth(0.4);
-    doc.roundedRect(PX,y-1,W-PX*2,th,3,3,'D');
-    doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
-    doc.setTextColor(...VERDE);
-    doc.text(lines, PX+6, y+7);
-    y += th+5;
-  }
-
-  // ── getters ───────────────────────────────────────────
-  // paciente
-  function pv(id)  { const s=document.querySelector('#'+id+' .pill.sel'); return s?s.getAttribute('data-val'):'—'; }
-  function pvs(id) { const ss=[...document.querySelectorAll('#'+id+' .pill.sel')]; return ss.length?ss.map(s=>s.getAttribute('data-val')).join(', '):'—'; }
-  function ptxt(id){ return document.getElementById(id)?.value?.trim()||'—'; }
-
-  // histórico familiar
-  function getFamiliar() {
-    const entradas = [];
-    Object.keys(famData).forEach(id => {
-      const d = famData[id];
-      if (d.parentesco || d.tipo) entradas.push((d.parentesco||'?')+' – '+(d.tipo||'?'));
-    });
-    return entradas.length ? entradas.join(' | ') : '—';
-  }
-
-  // queda onde
-  function getQueda() {
-    const map = {qb:'No banho',qe:'Ao escovar',qc:'No chão',qr:'Na roupa',qt:'No travesseiro'};
-    const sim = Object.entries(quedaState).filter(([,v])=>v==='Sim').map(([k])=>map[k]||k);
-    return sim.length ? sim.join(', ') : '—';
-  }
-
-  // médico — antecedentes (dx-row sem id)
-  function getAntecedente(nome) {
-    const all = [...document.querySelectorAll('.dx-row')];
-    const row = all.find(r => !r.id && r.querySelector('.dx-nome')?.textContent.includes(nome));
-    if (!row) return '—';
-    const sim = row.querySelector('.rp.sel-sim');
-    const nao = row.querySelector('.rp.sel-nao');
-    if (!sim && !nao) return '—';
-    if (nao) return 'Não';
-    const det = row.querySelector('.dx-detail input, .dx-detail textarea');
-    const v = det?.value?.trim();
-    return 'Sim' + (v ? ' – '+v : '');
-  }
-
-  // médico — hipótese (dx-row com id)
-  function gdx(rowId) {
-    const r = document.getElementById(rowId);
-    if (!r) return '—';
-    const sim = r.querySelector('.rp.sel-sim');
-    const nao = r.querySelector('.rp.sel-nao');
-    if (!sim && !nao) return '—';
-    if (nao) return 'Não';
-    const det = r.querySelector('.dx-detail input, .dx-detail textarea');
-    const v = det?.value?.trim();
-    return 'Sim' + (v ? ' – '+v : '');
-  }
-
-  // médico — escalas
-  function gsc(id) { const s=document.querySelector('#'+id+' .scale-btn.sel'); return s?s.textContent+'/4':'—'; }
-  // médico — pills
-  function gv(id)  { const s=document.querySelector('#'+id+' .pill.sel'); return s?s.getAttribute('data-val'):'—'; }
-  function gvs(id) { const ss=[...document.querySelectorAll('#'+id+' .pill.sel')]; return ss.length?ss.map(s=>s.getAttribute('data-val')).join(', '):'—'; }
-
-  // ═══════════════════════════════════════════════════
-  // PÁGINA 1 — QUESTIONÁRIO DO PACIENTE
-  // ═══════════════════════════════════════════════════
-  cabecalho();
-  const nomePac = document.getElementById('mp-nome').textContent;
-  const horaPac = document.getElementById('mp-hora').textContent;
-  pacHeader(nomePac, horaPac);
-
-  // identificação
-  secHead('IDENTIFICAÇÃO DO PACIENTE');
-  bloco([
-    ['Nome',           ptxt('p-nome')||nomePac],
-    ['Idade',          ptxt('p-idade') !== '—' ? ptxt('p-idade')+' anos' : '—'],
-    ['Profissão',      ptxt('p-prof')],
-    ['Data',           ptxt('p-data')],
-    ['Convênio',       pv('pg-conv') + (ptxt('p-conv-qual')!=='—' ? ' – '+ptxt('p-conv-qual') : '')],
-    ['Como nos conheceu', pvs('pg-conheceu')],
-  ]);
-
-  secHead('1. QUEIXA PRINCIPAL');
-  bloco([
-    ['Tipo de queixa',   pvs('pg-queixa')],
-    ['Tempo do problema',ptxt('p-tempo')],
-    ['Fios por dia',     ptxt('p-fios')],
-    ['Evolução',         pv('pg-prog')],
-    ['Queda onde ocorre',getQueda()],
-  ]);
-
-  secHead('3. ALTERAÇÕES NO COURO CABELUDO');
-  bloco([['Alterações', pvs('pg-couro')]]);
-
-  secHead('4–5. CRISES E TRATAMENTOS ANTERIORES');
-  bloco([
-    ['Outras crises anteriores', pv('pg-crise') + (ptxt('p-crise-q')!=='—' ? ' – '+ptxt('p-crise-q') : '')],
-    ['Já fez tratamento',        pv('pg-tratou') + (ptxt('p-trat-q')!=='—' ? ' – '+ptxt('p-trat-q') : '')],
-    ['Tipos de tratamento',      pvs('pg-trattipos')],
-  ]);
-
-  secHead('6–9. HÁBITOS CAPILARES');
-  bloco([
-    ['Medicação em uso',    pv('pg-med') + (ptxt('p-med-q')!=='—' ? ' – '+ptxt('p-med-q') : '')],
-    ['Frequência lavagem',  pv('pg-lav')],
-    ['Química no cabelo',   pv('pg-quim') + (pvs('pg-quimtipo')!=='—' ? ' – '+pvs('pg-quimtipo') : '') + (ptxt('p-quim-freq')!=='—' ? ' ('+ptxt('p-quim-freq')+')' : '')],
-    ['Últimos 4 meses',     ptxt('p-quim-4m')],
-    ['Chapinha / Escova',   pv('pg-chap') + (ptxt('p-chap-freq')!=='—' ? ' – '+ptxt('p-chap-freq') : '')],
-    ['Alongamento',         pv('pg-along') + (ptxt('p-along-t')!=='—' ? ' – '+ptxt('p-along-t') : '')],
-  ]);
-
-  secHead('10. HISTÓRICO FAMILIAR DE CALVÍCIE');
-  bloco([['Histórico familiar', getFamiliar()]]);
-
-  // ═══════════════════════════════════════════════════
-  // PÁGINA 2 — ANAMNESE DO MÉDICO
-  // ═══════════════════════════════════════════════════
-  doc.addPage(); y = 15;
-  cabecalho();
-  pacHeader(nomePac, horaPac + ' · Anamnese médica');
-
-  secHead('QUEIXA PRINCIPAL — REGISTRO MÉDICO');
-  bloco([['Queixa (médico)', ptxt('m-queixa')]]);
-
-  secHead('ANTECEDENTES PESSOAIS');
-  bloco([
-    ['1. Doenças Cardíacas',        getAntecedente('Cardíacas')],
-    ['2. Doenças Renais',           getAntecedente('Renais')],
-    ['3. Doenças Cancerígenas',     getAntecedente('Cancerígenas')],
-    ['4. Doenças Neurológicas',     getAntecedente('Neurológicas')],
-    ['5. Doenças Hematológicas',    getAntecedente('Hematológicas')],
-    ['6. Doenças Autoimunes',       getAntecedente('Autoimunes')],
-    ['7. Alergia a Medicamentos',   getAntecedente('Alergia')],
-    ['8. Internações / Cirurgias',  getAntecedente('Internações')],
-    ['9. Medicamentos em uso',      ptxt('m-meds')],
-  ]);
-
-  secHead('PARA MULHERES');
-  bloco([
-    ['1. Doenças Ginecológicas', getAntecedente('Ginecológicas')],
-    ['2. Ciclo menstrual',       gv('pg-ciclo')],
-    ['3. SOP / Fluxo',          gv('pg-sop') + (ptxt('m-fluxo')!=='—' ? ' – '+ptxt('m-fluxo') : '')],
-    ['4. Método de prevenção',  gvs('pg-prev')],
-    ['Quer engravidar',         gv('pg-eng')],
-    ['5. Tem filhos',           gv('pg-filhos')],
-  ]);
-
-  secHead('HÁBITOS E ESTILO DE VIDA');
-  bloco([
-    ['6. Alimentação',         gvs('pg-alim')],
-    ['Água (litros/dia)',      ptxt('m-agua')],
-    ['7. Peso últimos meses',  gv('pg-peso')],
-    ['8. Atividade física',    gv('pg-atv')],
-    ['9. Hábito intestinal',   gv('pg-int')],
-    ['10. Ant. familiares',    gvs('pg-antfam') + (ptxt('m-antfam-outras')!=='—' ? ' / '+ptxt('m-antfam-outras') : '')],
-  ]);
-
-  // ═══════════════════════════════════════════════════
-  // PÁGINA 3 — TRICOSCOPIA + HIPÓTESE + TRATAMENTO
-  // ═══════════════════════════════════════════════════
-  doc.addPage(); y = 15;
-  cabecalho();
-  pacHeader(nomePac, horaPac + ' · Tricoscopia e conduta');
-
-  secHead('TRICOSCOPIA DIGITAL');
-  bloco([
-    ['1. Teste de tração',       gv('pg-trac')],
-    ['2. Haste',                 gv('pg-haste')],
-    ['3. Miniaturização fios',   gv('pg-mini')],
-    ['4. Descamação',            gv('pg-desc')],
-    ['Hiperemia',                gsc('sc-hip')],
-    ['Oleosidade',               gsc('sc-ole')],
-    ['Crescimento fios',         gsc('sc-cres')],
-    ['Pelos cadavéricos/falhas', gvs('pg-outros-trico')],
-    ['Lesões / observações',     ptxt('t-obs')],
-  ]);
-
-  secHead('HIPÓTESE DIAGNÓSTICA');
-  bloco([
-    ['AGG',                  gdx('dr-agg')],
-    ['Alopecia Areata',      gdx('dr-aa')],
-    ['Alopecia Cicatricial', gdx('dr-ac')],
-    ['Dermatite Seborreica', gdx('dr-ds')],
-    ['Eflúvio',              gdx('dr-ef')],
-    ['Outras hipóteses',     ptxt('dx-outras')],
-  ]);
-
-  secHead('TRATAMENTO PROPOSTO');
-  blocoVerde(ptxt('m-trat'));
-
-  // assinaturas
-  checkPage(30);
-  y += 4;
-  doc.setDrawColor(180,180,180); doc.setLineWidth(0.4);
-  doc.line(PX, y+10, 90, y+10);
-  doc.line(120, y+10, W-PX, y+10);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(140,140,140);
-  doc.text('Assinatura do médico', PX, y+16);
-  doc.text('Assinatura do paciente', 120, y+16);
-  y += 24;
-
-  // rodapé todas as páginas
-  const total = doc.getNumberOfPages();
-  for (let i=1; i<=total; i++) {
-    doc.setPage(i);
-    doc.setFontSize(7); doc.setTextColor(170,170,170);
-    doc.text('TricoMaster · Medicina Capilar · Documento gerado eletronicamente · '+new Date().toLocaleString('pt-BR')+' · Página '+i+' de '+total, W/2, 291, {align:'center'});
-  }
-
-  doc.save('prontuario_'+nomePac.replace(/ /g,'_')+'.pdf');
-  document.getElementById('pdf-loader').style.display = 'none';
-  showToast('PDF gerado — '+total+' páginas!');
+// Listeners
+function stopListeners(){[unsubP,unsubM,unsubS].forEach(u=>u&&u());unsubP=unsubM=unsubS=null;}
+function startListeners(u){
+  unsubP=onSnapshot(playersCol(u),snap=>{
+    players=snap.docs.map(d=>({id:d.id,firestoreId:d.id,...d.data(),_periodSecs:0}));
+    renderAll();setSyncDot('ok');
+  },()=>setSyncDot('offline'));
+  unsubM=onSnapshot(matchDoc(u),snap=>{
+    if(!snap.exists())return;
+    const d=snap.data();
+    match.period=d.period??1;match.elapsed=d.elapsed??0;match.duration=d.duration??40;
+    match.subs=d.subs??[];match.running=false;slotMap=d.slotMap??{};
+    renderAll();setSyncDot('ok');
+  },()=>setSyncDot('offline'));
+  unsubS=onSnapshot(settingsDoc(u),snap=>{
+    if(!snap.exists())return;const d=snap.data();
+    if(d.colors){colors=d.colors;applyColors();}
+    if(d.teamName){teamName=d.teamName;updateHdr();}
+  },()=>{});
 }
 
-async function loadJsPDF() {
-  if (window.jspdf) return;
-  await new Promise((res,rej) => {
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    s.onload = res; s.onerror = rej; document.head.appendChild(s);
+// Master panel
+function loadMasterPanel(){
+  showLayer('master-screen');
+  const el=document.getElementById('master-list');
+  onSnapshot(collection(db,'teams'),snap=>{
+    if(!snap.docs.length){el.innerHTML='<div class="empty">Nenhum time cadastrado</div>';return;}
+    el.innerHTML=snap.docs.map(d=>{
+      const dt=d.data(),kc=dt.colors?.kit||'#333',ktc=dt.colors?.['kit-text']||'#fff';
+      const init=(dt.teamName||'?').slice(0,2).toUpperCase();
+      return`<div class="team-card" onclick="masterView('${d.id}','${(dt.teamName||'').replace(/'/g,"\\'")}')">
+        <div class="team-avatar" style="background:${kc};color:${ktc}">${init}</div>
+        <div style="flex:1;min-width:0"><div class="team-name">${dt.teamName||'Sem nome'}</div><div class="team-meta">${dt.trainerName||''} · ${dt.email||''}</div></div>
+        <div style="color:var(--muted);font-size:1rem">›</div>
+      </div>`;
+    }).join('');
+  });
+}
+window.masterView=function(u,name){uid=u;teamName=name;isAdmin=false;isVisitor=true;stopListeners();startListeners(u);applyRole();updateHdr();showLayer('app');};
+
+// Auth
+window.switchTab=function(tab){
+  document.getElementById('form-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('form-reg').style.display=tab==='reg'?'block':'none';
+  document.getElementById('tab-login').className='auth-tab '+(tab==='login'?'on':'off');
+  document.getElementById('tab-reg').className='auth-tab '+(tab==='reg'?'on':'off');
+  document.getElementById('auth-err').textContent='';
+};
+window.fazerLogin=async function(){
+  const email=document.getElementById('l-email').value.trim();
+  const senha=document.getElementById('l-senha').value;
+  const errEl=document.getElementById('auth-err');
+  errEl.textContent='';
+  if(!email||!senha){errEl.textContent='Preencha e-mail e senha.';return;}
+  const btn=document.getElementById('btn-login');btn.textContent='ENTRANDO...';btn.disabled=true;
+  try{await signInWithEmailAndPassword(auth,email,senha);}
+  catch(e){const msgs={'auth/user-not-found':'E-mail não cadastrado.','auth/wrong-password':'Senha incorreta.','auth/invalid-email':'E-mail inválido.','auth/too-many-requests':'Muitas tentativas.','auth/invalid-credential':'E-mail ou senha incorretos.'};errEl.textContent=msgs[e.code]||'Erro ao entrar.';}
+  finally{btn.textContent='ENTRAR';btn.disabled=false;}
+};
+window.fazerCadastro=async function(){
+  const tname=document.getElementById('r-time').value.trim();
+  const nome=document.getElementById('r-nome').value.trim();
+  const email=document.getElementById('r-email').value.trim();
+  const senha=document.getElementById('r-senha').value;
+  const errEl=document.getElementById('auth-err');errEl.textContent='';
+  if(!tname||!nome||!email||!senha){errEl.textContent='Preencha todos os campos.';return;}
+  if(senha.length<6){errEl.textContent='Senha mínimo 6 caracteres.';return;}
+  const btn=document.getElementById('btn-reg');btn.textContent='CRIANDO...';btn.disabled=true;
+  try{
+    const cred=await createUserWithEmailAndPassword(auth,email,senha);
+    await setDoc(teamDoc(cred.user.uid),{teamName:tname,trainerName:nome,email,colors:{kit:'#111111','kit-text':'#ffffff',accent:'#ff6600',field:'#1e6b1e'},createdAt:serverTimestamp()});
+    await setDoc(matchDoc(cred.user.uid),{period:1,elapsed:0,duration:40,running:false,subs:[],slotMap:{},updatedAt:serverTimestamp()});
+    showToast('✅ Time criado! Bem-vindo, '+nome+'!');
+  }catch(e){const msgs={'auth/email-already-in-use':'E-mail já cadastrado.','auth/weak-password':'Senha fraca.'};errEl.textContent=msgs[e.code]||'Erro ao criar conta.';}
+  finally{btn.textContent='CRIAR CONTA';btn.disabled=false;}
+};
+window.entrarComoVisitante=function(){showToast('⚠️ Peça o e-mail do treinador para entrar');};
+window.fazerLogout=async function(){
+  if(isMaster&&uid){stopListeners();loadMasterPanel();return;}
+  if(!confirm('Sair da conta?'))return;
+  if(match.running)pauseChrono();
+  stopListeners();await signOut(auth);showToast('👋 Saiu');
+};
+
+function applyRole(){
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=(isAdmin?'':'none'));
+  const badge=document.getElementById('role-badge');
+  if(badge){badge.textContent=isMaster?'MASTER':isAdmin?'ADMIN':'VISITANTE';badge.style.background=isMaster?'var(--blue)':isAdmin?'var(--accent)':'#333';badge.style.color=isMaster||isAdmin?'#fff':'var(--muted)';}
+  const ce=document.getElementById('cfg-email'),ct=document.getElementById('cfg-team');
+  if(ce)ce.textContent=auth.currentUser?.email||'—';if(ct)ct.textContent=teamName||'—';
+}
+function updateHdr(){
+  const ht=document.getElementById('hdr-team');if(ht)ht.textContent=teamName||'';
+  document.title=teamName?`PROFESSÔ · ${teamName}`:'PROFESSÔ';
+}
+
+// Save
+async function saveMatch(){
+  if(!isAdmin&&!isMaster)return;setSyncDot('saving');
+  try{await setDoc(matchDoc(uid),{period:match.period,elapsed:match.elapsed,duration:match.duration,running:false,subs:match.subs,slotMap,updatedAt:serverTimestamp()});setSyncDot('ok');}
+  catch(e){setSyncDot('offline');}
+}
+async function saveSettings(){
+  if(!isAdmin)return;
+  try{await setDoc(settingsDoc(uid),{colors,teamName,updatedAt:serverTimestamp()});}catch(e){}
+}
+async function updatePlayerFS(p){
+  if((!isAdmin&&!isMaster)||!p.firestoreId)return;
+  try{await setDoc(doc(db,'teams',uid,'players',p.firestoreId),{name:p.name,pos:p.pos,num:p.num??null,onField:p.onField||false,accSecs:p.accSecs||0,enteredAt:p._enteredAt||0,hasPlayed:p.hasPlayed||false,wasOnField:p.wasOnField||false});}catch(e){}
+}
+async function addPlayerFS(p){
+  if(!isAdmin)return null;
+  try{const r=await addDoc(playersCol(uid),{name:p.name,pos:p.pos,num:p.num??null,onField:false,accSecs:0,enteredAt:0,hasPlayed:false,wasOnField:false});return r.id;}catch(e){return null;}
+}
+async function deletePlayerFS(fid){if(!isAdmin)return;try{await deleteDoc(doc(db,'teams',uid,'players',fid));}catch(e){}}
+
+// Cronômetro
+window.toggleChrono=function(){if(match.period==='ht'){showToast('Intervalo — inicie o 2º tempo');return;}match.running?pauseChrono():startChrono();};
+function startChrono(){match.running=true;chronoStart=Date.now()-match.elapsed*1000;chronoTick=setInterval(tick,500);const btn=document.getElementById('btn-go');if(btn){btn.textContent='⏸ PAUSAR';btn.className='cbtn cbtn-pause admin-only';}}
+function pauseChrono(){match.running=false;clearInterval(chronoTick);chronoTick=null;flushTimes();const btn=document.getElementById('btn-go');if(btn){btn.textContent='▶ CONTINUAR';btn.className='cbtn cbtn-go admin-only';}saveMatch();renderAll();}
+window.resetChrono=function(){if(match.running)pauseChrono();match.elapsed=0;saveMatch();updateChronoDisplay();};
+window.setPeriod=function(p){if(match.running)pauseChrono();match.period=p;match.elapsed=0;const btn=document.getElementById('btn-go');if(btn){if(p==='ht'){btn.textContent='— INTERVALO —';btn.className='cbtn cbtn-reset admin-only';}else{btn.textContent='▶ INICIAR';btn.className='cbtn cbtn-go admin-only';}}saveMatch();updateChronoDisplay();};
+function tick(){match.elapsed=Math.floor((Date.now()-chronoStart)/1000);if(match.elapsed%5===0){flushTimes();checkWarnings();saveMatch();}updateChronoDisplay();renderFieldMinutes();}
+function flushTimes(){players.forEach(p=>{if(p.onField)p._periodSecs=Math.max(0,match.elapsed-(p._enteredAt||0));});}
+function updateChronoDisplay(){
+  const s=match.elapsed,m=Math.floor(s/60),sec=s%60,dur=match.duration*60;
+  const el=document.getElementById('chrono');if(!el)return;
+  el.textContent=`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  el.className='chrono-time'+(s>=dur?' over':(dur-s)<=300?' warn':'');
+  ['1','HT','2'].forEach(x=>{const b=document.getElementById('pb'+x);if(b)b.classList.toggle('on',String(match.period)===(x==='HT'?'ht':x));});
+  const dl=document.getElementById('dur-label');if(dl)dl.textContent=match.duration+'min';
+  const oc=document.getElementById('on-count');if(oc)oc.textContent=players.filter(p=>p.onField).length;
+}
+
+// Minutagem
+function getTotal(p){let a=p.accSecs||0;if(p.onField)a+=Math.max(0,match.elapsed-(p._enteredAt||0));return a;}
+function getTotalMins(p){return Math.floor(getTotal(p)/60);}
+function checkWarnings(){
+  const dur=match.duration*60,needy=players.filter(p=>!p.onField&&getTotal(p)<dur&&getTotal(p)>0);
+  const bar=document.getElementById('alert-bar'),chips=document.getElementById('warn-chips');if(!bar)return;
+  if(needy.length&&match.running){bar.classList.add('show');chips.innerHTML=needy.map(p=>`<div class="warn-chip">${p.name}(${getTotalMins(p)}′)</div>`).join('');}else bar.classList.remove('show');
+}
+
+// Render campo
+function renderField(){
+  const c=document.getElementById('campo-players');if(!c)return;
+  c.innerHTML=SLOTS.map(slot=>{
+    const pid=slotMap[slot.n],p=pid?players.find(x=>x.id===pid):null;
+    const filled=!!p,totalM=p?getTotalMins(p):0,dur=match.duration;
+    const done=p&&totalM>=dur,wt=p&&!done&&totalM>=dur*.8&&match.running;
+    return`<div class="slot${filled?' filled':''}${done?' done':''}${wt?' warn-time':''}" style="left:${slot.x}%;top:${slot.y}%" onclick="openSlotModal(${slot.n})">
+      <div class="slot-ring"><span class="slot-num">${slot.n}</span><span class="slot-initials">${p?initials(p.name):''}</span></div>
+      <div class="slot-name">${p?shortName(p.name):''}</div>
+      <div class="slot-min">${filled?totalM+'′':''}</div></div>`;
+  }).join('');
+}
+function renderFieldMinutes(){
+  SLOTS.forEach((slot,i)=>{
+    const el=document.querySelector(`#campo-players .slot:nth-child(${i+1})`);if(!el)return;
+    const pid=slotMap[slot.n],p=pid?players.find(x=>x.id===pid):null;if(!p)return;
+    const totalM=getTotalMins(p),dur=match.duration,done=totalM>=dur,wt=!done&&totalM>=dur*.8&&match.running;
+    const minEl=el.querySelector('.slot-min');if(minEl)minEl.textContent=totalM+'′';
+    el.classList.toggle('done',done);el.classList.toggle('warn-time',wt&&!done);
   });
 }
 
-
-// ── controle de acesso médico ─────────────────────────
-const SENHA_MEDICO = '1234'; // altere aqui
-let medicoAutenticado = false;
-
-function pedirSenha() {
-  if (medicoAutenticado) { switchTab('med'); return; }
-  document.getElementById('modal-senha').style.display = 'flex';
-  document.getElementById('input-senha').value = '';
-  document.getElementById('senha-erro').textContent = '';
-  setTimeout(() => document.getElementById('input-senha').focus(), 100);
+// Render banco
+function renderBench(){
+  const grid=document.getElementById('bench-grid'),cnt=document.getElementById('bench-cnt');if(!grid)return;
+  const bench=players.filter(p=>!p.onField);
+  if(cnt)cnt.textContent=`(${bench.length})`;
+  if(!bench.length){grid.innerHTML='<div class="empty" style="width:100%">Todos em campo</div>';return;}
+  grid.innerHTML=bench.map(p=>{const m=getTotalMins(p);return`<div class="bench-chip" onclick="openPlayerModal('${p.id}')"><div class="bench-chip-dot"></div><div class="bench-chip-name">${shortName(p.name)}</div>${m>0?`<div class="bench-chip-min">${m}′</div>`:''}<div class="bench-chip-pos">${p.pos}</div></div>`;}).join('');
 }
 
-function confirmarSenha() {
-  const v = document.getElementById('input-senha').value;
-  if (v === SENHA_MEDICO) {
-    medicoAutenticado = true;
-    fecharSenha();
-    switchTab('med');
-  } else {
-    document.getElementById('senha-erro').textContent = 'Senha incorreta. Tente novamente.';
-    document.getElementById('input-senha').value = '';
-    document.getElementById('input-senha').focus();
-  }
+// Render minutagem
+function dotColor(p){return p.onField?'#27ae60':p.wasOnField?'#f0b429':'#e74c3c';}
+function buildMinRow(p){
+  const dur=match.duration*60,total=getTotal(p),m=Math.floor(total/60),pct=Math.min(100,Math.round(total/dur*100));
+  const ok=total>=dur,part=total>0&&!ok,barCl=ok?'ok':part?'part':'zero',numCl=ok?'ok':part?'part':'zero';
+  const need=ok?'✅':total>0?`-${match.duration-m}min`:'—',needCl=!ok&&total>0?'urgent':'',dc=dotColor(p);
+  return`<div class="min-row" onclick="openPlayerModal('${p.id}')">
+    <div style="width:11px;height:11px;border-radius:50%;flex-shrink:0;background:${dc};box-shadow:0 0 0 3px ${dc}30;transition:background .3s"></div>
+    <div class="min-name">${p.name}</div><div class="min-pos">${p.pos}</div>
+    <div class="min-bar-wrap"><div class="min-bar-bg"><div class="min-bar-fill ${barCl}" style="width:${pct}%"></div></div></div>
+    <div class="min-num ${numCl}">${m}′</div><div class="min-need ${needCl}">${need}</div></div>`;
+}
+function renderMinutagem(){
+  const list=document.getElementById('min-list');if(!list)return;
+  const dl=document.getElementById('min-dur-label');if(dl)dl.textContent=match.duration+'min';
+  if(!players.length){list.innerHTML='<div class="empty">Nenhum atleta</div>';return;}
+  const onF=players.filter(p=>p.onField).sort((a,b)=>getTotal(b)-getTotal(a));
+  const bench=players.filter(p=>!p.onField).sort((a,b)=>getTotal(b)-getTotal(a));
+  list.innerHTML=
+    `<div class="sec-lbl"><div style="width:8px;height:8px;border-radius:50%;background:#27ae60"></div>EM CAMPO <span style="font-size:.72rem;color:#27ae60">(${onF.length})</span></div>`+
+    (onF.length?onF.map(buildMinRow).join(''):'<div class="empty" style="padding:10px 0">Nenhum em campo</div>')+
+    `<div style="height:1px;background:var(--border);margin:12px 0 10px"></div>`+
+    `<div class="sec-lbl"><div style="width:8px;height:8px;border-radius:50%;background:#555"></div>RESERVAS <span style="font-size:.72rem;color:var(--muted)">(${bench.length})</span></div>`+
+    (bench.length?bench.map(buildMinRow).join(''):'<div class="empty" style="padding:10px 0">Todos em campo</div>');
+  const sl=document.getElementById('sub-log');if(!sl)return;
+  if(!match.subs.length){sl.innerHTML='<div class="empty">Nenhuma substituição</div>';return;}
+  sl.innerHTML=[...match.subs].reverse().map(s=>{
+    const pi=players.find(x=>x.id===s.inId),po=players.find(x=>x.id===s.outId);
+    const per=s.period===1?'1T':s.period===2?'2T':'INT';
+    return`<div class="sub-row"><div class="sub-time-badge">${s.timeStr} <span style="font-size:.6rem">${per}</span></div><span class="sub-in">↓ ${pi?.name||'?'}</span><span style="color:#333;margin:0 4px">/</span><span class="sub-out">↑ ${po?.name||'?'}</span></div>`;
+  }).join('');
 }
 
-function fecharSenha() {
-  document.getElementById('modal-senha').style.display = 'none';
+// Elenco
+window.savePlayer=async function(){
+  const nome=document.getElementById('f-nome').value.trim(),pos=document.getElementById('f-pos').value,num=parseInt(document.getElementById('f-num').value)||null,eid=document.getElementById('f-edit-id').value;
+  if(!nome){showToast('⚠️ Informe o nome');return;}
+  if(eid){const p=players.find(x=>x.id===eid);if(p){p.name=nome;p.pos=pos;p.num=num;await updatePlayerFS(p);}cancelEditPlayer();showToast('✅ Atualizado');}
+  else{await addPlayerFS({name:nome,pos,num});document.getElementById('f-nome').value='';showToast('✅ '+nome+' adicionado');}
+};
+window.editPlayer=function(id){
+  const p=players.find(x=>x.id===id);if(!p)return;
+  document.getElementById('f-nome').value=p.name;document.getElementById('f-pos').value=p.pos;document.getElementById('f-num').value=p.num||'';document.getElementById('f-edit-id').value=p.id;
+  document.getElementById('form-title').textContent='✏️ EDITAR ATLETA';document.getElementById('btn-cancel-edit').style.display='block';
+  goScreen('elenco');window.scrollTo({top:0,behavior:'smooth'});
+};
+window.cancelEditPlayer=function(){
+  document.getElementById('f-nome').value='';document.getElementById('f-edit-id').value='';
+  document.getElementById('form-title').textContent='➕ NOVO JOGADOR';document.getElementById('btn-cancel-edit').style.display='none';
+};
+window.removePlayer=async function(id){
+  if(!confirm('Remover atleta?'))return;
+  const p=players.find(x=>x.id===id);if(!p)return;
+  await deletePlayerFS(p.firestoreId||id);
+  Object.keys(slotMap).forEach(k=>{if(slotMap[k]===id)delete slotMap[k];});
+  await saveMatch();showToast('🗑️ Removido');
+};
+function renderRoster(){
+  const el=document.getElementById('roster-list');if(!el)return;
+  if(!players.length){el.innerHTML='<div class="empty">Nenhum atleta</div>';return;}
+  el.innerHTML=players.map(p=>{const m=getTotalMins(p);return`<div class="player-row">
+    <div class="player-avatar">${initials(p.name)}</div>
+    <div class="player-info"><div class="player-name-txt">${p.name}${p.num?` <span style="color:var(--muted);font-size:.75rem">#${p.num}</span>`:''}</div><div class="player-meta">${p.pos}·${m}min·${p.onField?'<span style="color:var(--green)">em campo</span>':'banco'}</div></div>
+    <button class="field-toggle ${p.onField?'ft-on':'ft-off'}" onclick="toggleField('${p.id}')">${p.onField?'BANCO':'CAMPO'}</button>
+    <button class="mini-btn" onclick="editPlayer('${p.id}')">✏️</button>
+    <button class="mini-btn" onclick="removePlayer('${p.id}')">🗑️</button>
+  </div>`;}).join('');
+}
+window.toggleField=async function(id){
+  const p=players.find(x=>x.id===id);if(!p)return;
+  if(p.onField){p.accSecs+=Math.max(0,match.elapsed-(p._enteredAt||0));p.onField=false;p._enteredAt=0;p._periodSecs=0;p.wasOnField=true;Object.keys(slotMap).forEach(k=>{if(slotMap[k]===id)delete slotMap[k];});}
+  else{p.onField=true;p._enteredAt=match.elapsed;p._periodSecs=0;p.hasPlayed=true;}
+  await updatePlayerFS(p);await saveMatch();renderAll();
+};
+
+// Modal slot
+window.openSlotModal=function(n){
+  if(!isAdmin&&!isMaster){showToast('Apenas o treinador pode escalar');return;}
+  activeSlotN=n;slotPickId=slotMap[n]??null;
+  const slot=SLOTS.find(s=>s.n===n),curP=slotPickId?players.find(p=>p.id===slotPickId):null;
+  document.getElementById('slot-title').textContent=`Posição ${n}`;
+  document.getElementById('slot-sub').textContent=curP?`Atual: ${curP.name}`:'Escolha um jogador';
+  document.getElementById('slot-remove-btn').style.display=curP?'flex':'none';
+  const used=new Set(Object.entries(slotMap).filter(([k])=>parseInt(k)!==n).map(([,v])=>v));
+  const avail=players.filter(p=>!used.has(p.id));
+  document.getElementById('slot-list').innerHTML=avail.length
+    ?avail.map(p=>{const m=getTotalMins(p);return`<div class="sel-row${p.id===slotPickId?' picked':''}" id="slsel-${p.id}" onclick="pickSlotPlayer('${p.id}')"><div class="sel-avatar">${initials(p.name)}</div><div class="sel-info"><div class="sel-name">${p.name}</div><div class="sel-detail">${p.pos}·${p.onField?'em campo':'banco'}</div></div><div class="sel-min${m===0?' z':''}">${m>0?m+'′':'—'}</div></div>`;}).join('')
+    :'<div class="empty">Nenhum atleta</div>';
+  document.getElementById('modal-slot').classList.add('open');
+};
+window.pickSlotPlayer=function(id){slotPickId=id;document.querySelectorAll('[id^="slsel-"]').forEach(e=>e.classList.remove('picked'));const el=document.getElementById('slsel-'+id);if(el)el.classList.add('picked');};
+window.confirmSlot=async function(){
+  if(!slotPickId){showToast('⚠️ Selecione um jogador');return;}
+  const n=activeSlotN,prevId=slotMap[n]??null,newP=players.find(p=>p.id===slotPickId);if(!newP)return;
+  const saves=[];
+  if(prevId&&prevId!==slotPickId){const prev=players.find(p=>p.id===prevId);if(prev&&prev.onField){prev.accSecs+=Math.max(0,match.elapsed-(prev._enteredAt||0));prev.onField=false;prev._enteredAt=0;prev._periodSecs=0;prev.wasOnField=true;saves.push(updatePlayerFS(prev));}}
+  if(!newP.onField){newP.onField=true;newP._enteredAt=match.elapsed;newP._periodSecs=0;newP.hasPlayed=true;}
+  saves.push(updatePlayerFS(newP));slotMap[n]=slotPickId;saves.push(saveMatch());
+  await Promise.all(saves);closeModal('modal-slot');showToast(`✅ ${newP.name} → pos. ${n}`);renderAll();
+};
+window.removeFromSlot=async function(){
+  const n=activeSlotN,pid=slotMap[n];if(!pid){closeModal('modal-slot');return;}
+  const p=players.find(x=>x.id===pid);
+  if(p&&p.onField){p.accSecs+=Math.max(0,match.elapsed-(p._enteredAt||0));p.onField=false;p._enteredAt=0;p._periodSecs=0;p.wasOnField=true;await updatePlayerFS(p);}
+  delete slotMap[n];await saveMatch();closeModal('modal-slot');showToast('⬆ Removido');renderAll();
+};
+
+// Modal sub
+window.openSubModal=function(){
+  subOutId=null;subInId=null;
+  const onF=players.filter(p=>p.onField),bench=players.filter(p=>!p.onField);
+  document.getElementById('sub-out-list').innerHTML=onF.length
+    ?onF.map(p=>{const m=getTotalMins(p);return`<div class="sel-row" id="sout-${p.id}" onclick="pickSubOut('${p.id}')"><div class="sel-avatar">${initials(p.name)}</div><div class="sel-info"><div class="sel-name">${p.name}</div><div class="sel-detail">${p.pos}·${m}min</div></div><div class="sel-min${m===0?' z':''}">${m}′</div></div>`;}).join('')
+    :'<div class="empty">Ninguém em campo</div>';
+  document.getElementById('sub-in-list').innerHTML=bench.length
+    ?bench.map(p=>{const m=getTotalMins(p);return`<div class="sel-row" id="sin-${p.id}" onclick="pickSubIn('${p.id}')"><div class="sel-avatar">${initials(p.name)}</div><div class="sel-info"><div class="sel-name">${p.name}</div><div class="sel-detail">${p.pos}·${m}min</div></div><div class="sel-min${m===0?' z':''}">${m>0?m+'′':'—'}</div></div>`;}).join('')
+    :'<div class="empty">Ninguém no banco</div>';
+  document.getElementById('modal-sub').classList.add('open');
+};
+window.pickSubOut=function(id){subOutId=id;document.querySelectorAll('[id^="sout-"]').forEach(e=>e.classList.remove('picked'));const el=document.getElementById('sout-'+id);if(el)el.classList.add('picked');};
+window.pickSubIn=function(id){subInId=id;document.querySelectorAll('[id^="sin-"]').forEach(e=>e.classList.remove('picked'));const el=document.getElementById('sin-'+id);if(el)el.classList.add('picked');};
+window.confirmSub=async function(){
+  if(!subOutId||!subInId){showToast('⚠️ Selecione quem sai e quem entra');return;}
+  const pOut=players.find(p=>p.id===subOutId),pIn=players.find(p=>p.id===subInId);if(!pOut||!pIn)return;
+  const slotKey=Object.keys(slotMap).find(k=>slotMap[k]===subOutId);
+  pOut.accSecs+=Math.max(0,match.elapsed-(pOut._enteredAt||0));pOut.onField=false;pOut._enteredAt=0;pOut._periodSecs=0;pOut.wasOnField=true;
+  pIn.onField=true;pIn._enteredAt=match.elapsed;pIn._periodSecs=0;pIn.hasPlayed=true;
+  if(slotKey!==undefined){slotMap[slotKey]=subInId;}else{Object.keys(slotMap).forEach(k=>{if(slotMap[k]===subInId)delete slotMap[k];});}
+  Object.keys(slotMap).forEach(k=>{if(slotMap[k]===subInId&&k!==slotKey)delete slotMap[k];});
+  const timeStr=`${Math.floor(match.elapsed/60)}'`;
+  match.subs.push({outId:subOutId,inId:subInId,time:match.elapsed,period:match.period,timeStr});
+  await Promise.all([updatePlayerFS(pOut),updatePlayerFS(pIn),saveMatch()]);
+  closeModal('modal-sub');showToast(`🔄 ${pIn.name} ↔ ${pOut.name}`);renderAll();
+};
+window.openSubFromPlayer=function(){closeModal('modal-player');openSubModal();if(playerModalId){setTimeout(()=>{const p=players.find(x=>x.id===playerModalId);if(p){if(p.onField)pickSubOut(playerModalId);else pickSubIn(playerModalId);}},250);}};
+
+// Modal player
+window.openPlayerModal=function(id){
+  const p=players.find(x=>x.id===id);if(!p)return;playerModalId=id;
+  document.getElementById('pm-name').textContent=p.name;
+  document.getElementById('pm-sub').textContent=p.pos+(p.num?` · #${p.num}`:'');
+  const total=getTotal(p),m=Math.floor(total/60),dur=match.duration,pct=Math.min(100,Math.round(total/(dur*60)*100)),ok=m>=dur;
+  document.getElementById('pm-content').innerHTML=`
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div style="flex:1;background:var(--card2);border-radius:9px;padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:${ok?'var(--green)':'var(--text)'}">${m}<span style="font-size:1rem">min</span></div>
+        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">jogados</div>
+      </div>
+      <div style="flex:1;background:var(--card2);border-radius:9px;padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:${p.onField?'var(--green)':'var(--muted)'}">${p.onField?'▶':'🪑'}</div>
+        <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${p.onField?'em campo':'banco'}</div>
+      </div>
+    </div>
+    <div style="background:var(--card2);border-radius:9px;padding:12px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:.72rem;color:var(--muted);font-weight:600">Progresso (${dur}min)</span><span style="font-size:.72rem;color:${ok?'var(--green)':'var(--blue)'};font-weight:700">${pct}%</span></div>
+      <div style="background:#222;border-radius:20px;height:7px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${ok?'var(--green)':'var(--blue)'};border-radius:20px;transition:width .5s"></div></div>
+      ${!ok&&total>0?`<div style="font-size:.7rem;color:var(--yellow);margin-top:5px;font-weight:600">Falta ${dur-m}min</div>`:ok?`<div style="font-size:.7rem;color:var(--green);margin-top:5px;font-weight:600">✅ Completo!</div>`:''}
+    </div>`;
+  document.getElementById('modal-player').classList.add('open');
+};
+
+// Cores
+window.applyColor=function(key,val){colors[key]=val;applyColors();saveSettings();};
+function applyColors(){
+  const r=document.documentElement.style;
+  r.setProperty('--kit',colors.kit||'#111111');r.setProperty('--kit-text',colors['kit-text']||'#ffffff');
+  r.setProperty('--accent',colors.accent||'#ff6600');r.setProperty('--field',colors.field||'#1e6b1e');
+  const campo=document.getElementById('campo');if(campo)campo.style.background=colors.field||'#1e6b1e';
+  [['pick-kit','sw-kit','sw-kit-hex','kit'],['pick-kit-txt','sw-kit-txt','sw-kit-txt-hex','kit-text'],
+   ['pick-accent','sw-accent','sw-accent-hex','accent'],['pick-field','sw-field','sw-field-hex','field']
+  ].forEach(([pid,sid,hid,key])=>{const v=colors[key]||'#000';const pi=document.getElementById(pid),si=document.getElementById(sid),hi=document.getElementById(hid);if(pi)pi.value=v;if(si)si.style.background=v;if(hi)hi.textContent=v;});
+}
+window.changeDur=function(d){match.duration=Math.max(10,Math.min(90,match.duration+d));saveMatch();const el=document.getElementById('dur-cfg');if(el)el.textContent=match.duration+' min';updateChronoDisplay();};
+window.resetMatch=async function(){
+  if(!confirm('Resetar partida?'))return;if(match.running)pauseChrono();
+  match.period=1;match.elapsed=0;match.running=false;match.subs=[];slotMap={};
+  const saves=players.map(p=>{p.accSecs=0;p.onField=false;p._enteredAt=0;p._periodSecs=0;p.hasPlayed=false;p.wasOnField=false;return updatePlayerFS(p);});
+  saves.push(saveMatch());await Promise.all(saves);updateChronoDisplay();renderAll();showToast('🔄 Partida resetada');
+};
+
+// Nav / modais
+window.goScreen=function(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('s-'+id).classList.add('active');
+  if(btn)btn.classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});renderAll();
+};
+window.closeModal=function(id){document.getElementById(id).classList.remove('open');};
+window.closeBg=function(e,id){if(e.target===document.getElementById(id))closeModal(id);};
+
+// Relógio
+function startRealClock(){
+  function tick(){const el=document.getElementById('real-clock');if(!el)return;const now=new Date();el.textContent=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;}
+  tick();setInterval(tick,1000);
 }
 
-// fecha modal clicando fora
-document.getElementById('modal-senha').addEventListener('click', function(e) {
-  if (e.target === this) fecharSenha();
-});
+// Utils
+function initials(n){return n.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+function shortName(n){const p=n.trim().split(/\s+/);return p.length>1?p[0]:n;}
+let _tt;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2600);}
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+// Render all
+function renderAll(){
+  updateChronoDisplay();renderField();renderBench();renderMinutagem();renderRoster();checkWarnings();applyColors();applyRole();
+  const dc=document.getElementById('dur-cfg');if(dc)dc.textContent=match.duration+' min';
 }
 </script>
 </body>
