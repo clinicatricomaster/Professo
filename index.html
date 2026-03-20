@@ -1,0 +1,2129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PROFESSÔ">
+<meta name="application-name" content="PROFESSÔ">
+<meta name="theme-color" content="#ff6600">
+<meta name="description" content="Gerenciador de time — escalação, minutagem e substituições">
+<title>PROFESSÔ</title>
+
+<script>
+// ── INLINE PWA MANIFEST via blob ─────────────────────
+(function(){
+  const manifest = {
+    name: "PROFESSÔ",
+    short_name: "PROFESSÔ",
+    description: "Gerenciador de time — escalação e minutagem",
+    start_url: "./",
+    display: "standalone",
+    orientation: "portrait",
+    background_color: "#0f0f0f",
+    theme_color: "#ff6600",
+    icons: [
+      {
+        src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%230f0f0f'/><text x='96' y='130' font-family='sans-serif' font-size='110' font-weight='900' text-anchor='middle' fill='%23ff6600'>P</text></svg>`),
+        sizes: "192x192", type: "image/svg+xml", purpose: "any maskable"
+      },
+      {
+        src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230f0f0f'/><text x='256' y='360' font-family='sans-serif' font-size='300' font-weight='900' text-anchor='middle' fill='%23ff6600'>P</text></svg>`),
+        sizes: "512x512", type: "image/svg+xml", purpose: "any maskable"
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest'; link.href = url;
+  document.currentScript.after(link);
+})();
+
+// ── INLINE SERVICE WORKER ─────────────────────────────
+if ('serviceWorker' in navigator) {
+  const swCode = `
+const CACHE = 'professo-v1';
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(clients.claim());
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(e.request)))
+  );
+});
+  `;
+  const blob = new Blob([swCode], {type:'text/javascript'});
+  const swURL = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swURL, {scope: './'}).catch(()=>{});
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ─────────────────────────────────────────── */
+:root {
+  --accent:    #ff6600;
+  --accent2:   #ff6600;
+  --field:     #1e6b1e;
+  --field2:    #1a5e1a;
+  --app-bg:    #0f0f0f;
+  --card-bg:   #1a1a1a;
+  --card2:     #242424;
+  --border:    #2e2e2e;
+  --text:      #f0f0f0;
+  --muted:     #666;
+  --green:     #27ae60;
+  --yellow:    #f0b429;
+  --red:       #e74c3c;
+  --blue:      #3a7bd5;
+  --radius:    14px;
+  --nav-h:     62px;
+  --hdr-h:     54px;
+  --safe-top:  env(safe-area-inset-top, 0px);
+  --safe-bot:  env(safe-area-inset-bottom, 0px);
+  /* kit color — editável pelo usuário */
+  --kit:       #111111;
+  --kit-text:  #ffffff;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin:0; padding:0 }
+html, body {
+  background: var(--app-bg);
+  font-family: 'Barlow', sans-serif;
+  color: var(--text);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+}
+
+/* ── HEADER ─────────────────────────────────────────── */
+.hdr {
+  position: fixed; top:0; left:0; right:0; z-index: 200;
+  height: calc(var(--hdr-h) + var(--safe-top));
+  padding-top: var(--safe-top);
+  background: var(--app-bg);
+  border-bottom: 2px solid var(--accent);
+  display: flex; align-items: center;
+  padding-left: 16px; padding-right: 16px;
+  gap: 10px;
+}
+.hdr-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  color: var(--accent);
+  letter-spacing: 3px;
+  line-height: 1;
+  flex: 1;
+}
+.hdr-logo span { color: var(--text); }
+.hdr-btns { display: flex; gap: 6px; }
+.icon-btn {
+  width: 36px; height: 36px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 9px; color: var(--text); font-size: 1rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: .15s;
+}
+.icon-btn:active { background: var(--accent); border-color: var(--accent); }
+
+/* ── BODY ────────────────────────────────────────────── */
+.app-body {
+  padding-top: calc(var(--hdr-h) + var(--safe-top) + 10px);
+  padding-bottom: calc(var(--nav-h) + var(--safe-bot) + 12px);
+  min-height: 100vh;
+}
+.screen { display: none; padding: 0 12px; animation: fadeUp .22s ease both; }
+.screen.active { display: block; }
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* ── NAV ─────────────────────────────────────────────── */
+.nav {
+  position: fixed; bottom:0; left:0; right:0; z-index: 200;
+  height: calc(var(--nav-h) + var(--safe-bot));
+  background: var(--app-bg);
+  border-top: 2px solid var(--accent);
+  display: flex; align-items: flex-start; padding-top: 8px;
+}
+.nb {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
+  font-size: .65rem; font-weight: 700; letter-spacing: .8px;
+  text-transform: uppercase; padding: 4px 2px; position: relative;
+  transition: color .18s;
+}
+.nb-icon { font-size: 1.35rem; line-height: 1; display:flex; align-items:center; justify-content:center; height:22px; }
+.nb.on { color: var(--accent); }
+.nb.on::after {
+  content: ''; position: absolute; top: -8px; left: 50%;
+  transform: translateX(-50%); width: 28px; height: 3px;
+  background: var(--accent); border-radius: 0 0 4px 4px;
+}
+.nb:active { opacity: .7; }
+
+/* ── CARD ────────────────────────────────────────────── */
+.card {
+  background: var(--card-bg); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 16px; margin-bottom: 12px;
+}
+.card-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.25rem; letter-spacing: 2px;
+  color: var(--text); border-bottom: 2px solid var(--accent);
+  padding-bottom: 6px; margin-bottom: 14px;
+}
+
+/* ── CRONÔMETRO ──────────────────────────────────────── */
+.chrono-wrap {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.period-row { display: flex; gap: 5px; width: 100%; }
+.pbtn {
+  flex: 1; background: var(--card2); border: 1.5px solid var(--border);
+  color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
+  font-size: .8rem; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; padding: 8px 6px; border-radius: 8px;
+  cursor: pointer; transition: .15s;
+}
+.pbtn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chrono-time {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 5rem; color: var(--text); letter-spacing: 4px; line-height: 1;
+  text-shadow: 0 0 40px rgba(255,102,0,.25);
+  transition: color .3s;
+}
+.chrono-time.warn  { color: var(--yellow); text-shadow: 0 0 30px rgba(240,180,41,.4); }
+.chrono-time.over  { color: var(--red);    animation: blink .7s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.5} }
+.chrono-btns { display: flex; gap: 8px; width: 100%; }
+.cbtn {
+  flex: 1; padding: 14px; border: none; border-radius: 11px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem;
+  letter-spacing: 1.5px; cursor: pointer; transition: .15s;
+}
+.cbtn:active { transform: scale(.97); }
+.cbtn-go    { background: var(--green); color: #fff; }
+.cbtn-pause { background: #444; color: #fff; }
+.cbtn-reset { background: var(--card2); color: var(--muted); flex: .4; font-size: .9rem; }
+.chrono-meta { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.cm-pill {
+  background: var(--card2); color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .72rem; font-weight: 700; letter-spacing: .5px;
+  padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);
+}
+.cm-pill b { color: var(--text); }
+
+/* ── CAMPO ───────────────────────────────────────────── */
+.campo-wrap {
+  margin-bottom: 12px;
+  border-radius: var(--radius); overflow: hidden;
+  border: 2px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+.campo {
+  position: relative;
+  background: var(--field);
+  width: 100%; aspect-ratio: 68/105;
+  max-width: 340px; margin: 0 auto;
+  overflow: hidden;
+  display: block;
+}
+/* Listras do gramado */
+.campo::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0,0,0,0) 0px, rgba(0,0,0,0) 30px,
+    rgba(0,0,0,.06) 30px, rgba(0,0,0,.06) 60px
+  );
+  pointer-events: none; z-index: 1;
+}
+/* SVG das linhas fica sobre as listras */
+.campo-lines {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+}
+.campo-lines svg { width: 100%; height: 100%; }
+
+/* Container dos jogadores */
+#campo-players {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+}
+
+/* Slot vazio (clicável) */
+.slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; pointer-events: auto; z-index: 4;
+  transition: transform .15s;
+}
+.slot:active { transform: translate(-50%, -50%) scale(.9); }
+
+.slot-ring {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 2.5px dashed rgba(255,255,255,.35);
+  background: rgba(0,0,0,.2);
+  display: flex; align-items: center; justify-content: center;
+  transition: .2s;
+}
+.slot-ring:hover { border-color: rgba(255,255,255,.7); background: rgba(0,0,0,.35); }
+
+.slot-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem; color: rgba(255,255,255,.45);
+  line-height: 1; letter-spacing: 1px;
+}
+
+/* Jogador escalado */
+.slot.filled .slot-ring {
+  background: var(--kit);
+  border: 3px solid rgba(255,255,255,.8);
+  border-style: solid;
+  box-shadow: 0 2px 10px rgba(0,0,0,.6), 0 0 0 2px rgba(255,255,255,.15);
+}
+.slot.filled .slot-num { display: none; }
+.slot-initials {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem; color: var(--kit-text);
+  line-height: 1; letter-spacing: .5px;
+  display: none;
+}
+.slot.filled .slot-initials { display: block; }
+
+.slot-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .6rem; font-weight: 700; letter-spacing: .3px;
+  color: #fff; text-align: center;
+  text-shadow: 0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,.9);
+  max-width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  line-height: 1.1;
+  opacity: 0; transition: opacity .2s;
+}
+.slot.filled .slot-name { opacity: 1; }
+
+.slot-min {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .52rem; font-weight: 700;
+  color: var(--green);
+  text-shadow: 0 1px 4px rgba(0,0,0,1);
+  opacity: 0; line-height: 1;
+  transition: opacity .2s;
+}
+.slot.filled .slot-min { opacity: 1; }
+.slot.filled.done .slot-ring { border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(240,180,41,.5), 0 2px 10px rgba(0,0,0,.6); }
+.slot.filled.warn-time .slot-ring { border-color: var(--yellow); animation: glowring .8s infinite; }
+@keyframes glowring {
+  0%,100% { box-shadow: 0 0 0 2px rgba(240,180,41,.4), 0 2px 10px rgba(0,0,0,.5); }
+  50%      { box-shadow: 0 0 0 5px rgba(240,180,41,.6), 0 2px 12px rgba(0,0,0,.5); }
+}
+
+/* ── BANCO ───────────────────────────────────────────── */
+.bench-card {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px; margin-bottom: 12px;
+}
+.bench-label {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1rem;
+  letter-spacing: 2px; color: var(--muted); margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.bench-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.bench-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 11px; border-radius: 8px;
+  background: var(--card2); border: 1.5px solid var(--border);
+  cursor: pointer; transition: .15s;
+}
+.bench-chip:active { border-color: var(--accent); transform: scale(.96); }
+.bench-chip-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--kit); border: 1px solid rgba(255,255,255,.2);
+  flex-shrink: 0;
+}
+.bench-chip-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .85rem; font-weight: 700; color: var(--text);
+}
+.bench-chip-min {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .72rem; font-weight: 700; color: var(--green);
+}
+.bench-chip-min.z { color: var(--muted); }
+.bench-chip-pos {
+  font-size: .58rem; background: rgba(255,255,255,.08);
+  color: var(--muted); padding: 1px 5px; border-radius: 3px;
+  font-weight: 700; letter-spacing: .3px;
+}
+
+/* ── MINUTAGEM ───────────────────────────────────────── */
+.min-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px; border-radius: 9px;
+  background: var(--card2); border: 1px solid var(--border);
+  margin-bottom: 4px; cursor: pointer; transition: .15s;
+}
+.min-row:active { background: #2e2e2e; }
+.min-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--kit); flex-shrink:0; }
+.min-name { font-family: 'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; flex:1; }
+.min-pos { background: rgba(255,255,255,.07); color: var(--muted); font-size: .6rem;
+  font-weight: 700; padding: 2px 6px; border-radius: 3px; letter-spacing: .3px; flex-shrink:0; }
+.min-status-dot { font-size: .7rem; flex-shrink:0; }
+.min-bar-wrap { flex: 1.4; max-width: 110px; }
+.min-bar-bg { background: #2a2a2a; border-radius: 20px; height: 5px; overflow: hidden; }
+.min-bar-fill { height: 100%; border-radius: 20px; transition: width .5s; }
+.min-bar-fill.ok   { background: var(--green); }
+.min-bar-fill.part { background: var(--blue); }
+.min-bar-fill.zero { background: #333; }
+.min-num { font-family:'Barlow Condensed',sans-serif; font-size:.85rem; font-weight:800; min-width:32px; text-align:right; flex-shrink:0; }
+.min-num.ok   { color: var(--green); }
+.min-num.part { color: var(--blue); }
+.min-num.zero { color: var(--muted); }
+.min-need { font-family:'Barlow Condensed',sans-serif; font-size:.65rem; font-weight:700; color:var(--muted); flex-shrink:0; min-width:30px; text-align:right; }
+.min-need.urgent { color: var(--yellow); }
+
+/* Sub log */
+.sub-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  background: var(--card2); margin-bottom: 4px;
+  font-family: 'Barlow Condensed',sans-serif; font-size: .85rem;
+}
+.sub-time-badge { color: var(--muted); font-size: .72rem; font-weight: 700; min-width: 36px; }
+.sub-in  { color: var(--green); font-weight: 800; }
+.sub-out { color: var(--red); font-weight: 800; }
+
+/* Warn chips */
+.warn-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.warn-chip {
+  background: rgba(240,180,41,.12); border: 1.5px solid rgba(240,180,41,.3);
+  border-radius: 6px; padding: 3px 8px;
+  font-family: 'Barlow Condensed',sans-serif; font-size: .75rem; font-weight: 700;
+  color: var(--yellow);
+}
+
+/* ── SETUP / JOGADORES ───────────────────────────────── */
+.form-label {
+  display: block; font-size: .7rem; font-weight: 700;
+  letter-spacing: .5px; color: var(--muted); text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.form-input {
+  width: 100%; background: var(--card2); border: 1.5px solid var(--border);
+  border-radius: 9px; color: var(--text); padding: 12px 13px;
+  font-family: 'Barlow', sans-serif; font-size: .95rem;
+  transition: border-color .2s; -webkit-appearance: none;
+}
+.form-input:focus { outline: none; border-color: var(--accent); }
+.form-input::placeholder { color: #444; }
+.field { margin-bottom: 12px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.btn-main {
+  width: 100%; background: var(--accent); color: #fff; border: none;
+  border-radius: 11px; padding: 14px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px;
+  cursor: pointer; transition: .15s;
+}
+.btn-main:active { opacity: .8; transform: scale(.98); }
+.btn-ghost {
+  width: 100%; background: var(--card2); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 11px; padding: 12px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 1.5px;
+  cursor: pointer; margin-top: 8px;
+}
+
+.player-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.player-row:last-child { border-bottom: none; }
+.player-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--kit); border: 2px solid rgba(255,255,255,.15);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: .9rem;
+  color: var(--kit-text); flex-shrink: 0;
+}
+.player-info { flex: 1; min-width: 0; }
+.player-name-txt { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; }
+.player-meta { font-size: .7rem; color: var(--muted); font-weight: 500; }
+.mini-btn {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 5px 9px; font-size: .82rem; cursor: pointer;
+  color: var(--text); flex-shrink:0;
+}
+.mini-btn:active { background: var(--accent); border-color: var(--accent); }
+.field-toggle {
+  padding: 5px 10px; border-radius: 7px; border: none; cursor: pointer;
+  font-family: 'Barlow Condensed',sans-serif; font-size: .75rem; font-weight: 800;
+  letter-spacing: .5px; text-transform: uppercase; flex-shrink:0;
+}
+.ft-on  { background: rgba(231,76,60,.15); color: var(--red); border: 1px solid rgba(231,76,60,.3); }
+.ft-off { background: rgba(39,174,96,.15); color: var(--green); border: 1px solid rgba(39,174,96,.3); }
+
+/* ── CONFIG CORES ────────────────────────────────────── */
+.color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.color-swatch {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 9px; padding: 10px 12px; cursor: pointer;
+}
+.swatch-preview {
+  width: 32px; height: 32px; border-radius: 6px;
+  border: 2px solid rgba(255,255,255,.15); flex-shrink:0;
+}
+.swatch-label { font-family:'Barlow Condensed',sans-serif; font-size:.85rem; font-weight:700; }
+.swatch-hex { font-size:.65rem; color: var(--muted); font-family: monospace; }
+input[type=color] { position:absolute; opacity:0; width:1px; height:1px; }
+
+.cfg-row { display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border); }
+.cfg-row:last-child { border-bottom: none; }
+.cfg-label { font-family:'Barlow Condensed',sans-serif; font-size:.95rem; font-weight:700; }
+.cfg-val { font-family:'Barlow Condensed',sans-serif; font-size:.9rem; color: var(--accent); font-weight:700; }
+
+/* ── MODAL ───────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset:0; background: rgba(0,0,0,.75); z-index: 500;
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity:0; pointer-events:none;
+  transition: opacity .2s;
+}
+.overlay.open { opacity:1; pointer-events:auto; }
+.sheet {
+  background: var(--card-bg); border-radius: 20px 20px 0 0;
+  border: 1px solid var(--border); border-bottom: none;
+  padding: 18px 18px calc(18px + var(--safe-bot));
+  width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.32,.72,0,1);
+}
+.overlay.open .sheet { transform: translateY(0); }
+.sheet-handle { width: 38px; height: 4px; background: #333; border-radius: 2px; margin: 0 auto 14px; }
+.sheet-title { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:2px; margin-bottom:3px; }
+.sheet-sub { font-size:.78rem; color:var(--muted); margin-bottom:14px; }
+
+.sel-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-radius: 10px;
+  border: 2px solid var(--border); background: var(--card2);
+  cursor: pointer; margin-bottom: 5px; transition: .15s;
+}
+.sel-row:active, .sel-row.picked { border-color: var(--accent); background: rgba(255,102,0,.08); }
+.sel-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family:'Bebas Neue',sans-serif; font-size:.9rem;
+  background: var(--kit); color: var(--kit-text);
+  flex-shrink:0; border: 2px solid rgba(255,255,255,.15);
+}
+.sel-info { flex:1 }
+.sel-name { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; }
+.sel-detail { font-size:.7rem; color:var(--muted); }
+.sel-min { font-family:'Barlow Condensed',sans-serif; font-size:.9rem; font-weight:800; color:var(--green); }
+.sel-min.z { color:var(--muted); }
+
+.modal-btns { display:flex; gap:8px; margin-top:14px; }
+.mbtn {
+  flex:1; padding:14px; border:none; border-radius:11px;
+  font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:1.5px; cursor:pointer;
+  transition:.15s;
+}
+.mbtn:active { transform:scale(.97); }
+.mbtn-ok   { background:var(--accent); color:#fff; }
+.mbtn-ghost{ background:var(--card2); color:var(--muted); border:1px solid var(--border); }
+.mbtn-del  { background:rgba(231,76,60,.15); color:var(--red); border:1px solid rgba(231,76,60,.3); flex:.6; }
+
+/* ── MISC ────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: calc(var(--nav-h) + var(--safe-bot) + 14px);
+  left:50%; transform: translateX(-50%) translateY(16px);
+  background: #1a1a1a; color:#fff;
+  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  padding: 11px 18px; border-radius: 30px;
+  font-family:'Barlow Condensed',sans-serif; font-size:.95rem; letter-spacing:.5px;
+  white-space: nowrap; z-index:600; opacity:0; pointer-events:none;
+  transition: all .3s cubic-bezier(.22,.68,0,1.2);
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+.toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+.empty { text-align:center; color:var(--muted); padding:20px 0;
+  font-family:'Barlow Condensed',sans-serif; font-size:.95rem; letter-spacing:.5px; }
+.section-lbl {
+  font-family:'Bebas Neue',sans-serif; font-size:.85rem; letter-spacing:2px;
+  color:var(--muted); margin:14px 0 6px 2px;
+}
+
+/* Alerta jogadores precisam jogar */
+.alert-bar {
+  background: rgba(240,180,41,.1); border: 1.5px solid rgba(240,180,41,.25);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;
+  display:none;
+}
+.alert-bar.show { display:block; }
+.alert-bar-title {
+  font-family:'Barlow Condensed',sans-serif; font-size:.85rem; font-weight:800;
+  color:var(--yellow); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;
+}
+</style>
+</head>
+<body>
+
+<!-- BANNER INSTALAR (Android/Chrome) -->
+<div id="install-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;
+  background:var(--accent);padding:10px 14px;
+  display:none;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.4)">
+  <div style="flex:1">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:1px;color:#fff">Instalar PROFESSÔ</div>
+    <div style="font-size:.72rem;color:rgba(255,255,255,.75);margin-top:1px">Acesso rápido na tela inicial</div>
+  </div>
+  <button id="btn-install" style="background:#fff;color:var(--accent);border:none;border-radius:8px;
+    padding:8px 14px;font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:1px;cursor:pointer">
+    INSTALAR
+  </button>
+  <button onclick="document.getElementById('install-banner').style.display='none'" style="background:none;border:none;
+    color:rgba(255,255,255,.7);font-size:1.2rem;cursor:pointer;padding:0 4px">✕</button>
+</div>
+
+<!-- BANNER iOS (Safari não tem prompt nativo) -->
+<div id="ios-banner" style="display:none;position:fixed;bottom:calc(var(--nav-h) + var(--safe-bot) + 10px);
+  left:12px;right:12px;z-index:999;background:#1a1a1a;border:1px solid var(--border);
+  border-radius:14px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+  <div style="display:flex;align-items:flex-start;gap:10px">
+    <div style="font-size:1.6rem;line-height:1;flex-shrink:0">📲</div>
+    <div style="flex:1">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:1px;color:var(--text);margin-bottom:3px">Instalar no iPhone</div>
+      <div style="font-size:.78rem;color:var(--muted);line-height:1.5">
+        Toque em <strong style="color:var(--text)">Compartilhar</strong>
+        <span style="font-size:.9rem"> ⬆</span> e depois em
+        <strong style="color:var(--text)">"Adicionar à Tela de Início"</strong>
+      </div>
+    </div>
+    <button onclick="document.getElementById('ios-banner').style.display='none'" style="background:none;border:none;
+      color:var(--muted);font-size:1.1rem;cursor:pointer;flex-shrink:0;padding:0">✕</button>
+  </div>
+</div>
+<!-- TELA DE LOGIN -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:#0f0f0f;
+  z-index:9998;flex-direction:column;align-items:center;justify-content:center;padding:28px">
+  <div style="width:100%;max-width:340px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--accent);
+      letter-spacing:4px;text-align:center;margin-bottom:4px">PROFESSÔ</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;color:var(--muted);
+      text-align:center;letter-spacing:2px;text-transform:uppercase;margin-bottom:32px">Gerenciador de Time</div>
+
+    <!-- Visitante -->
+    <button onclick="entrarComoVisitante()" style="width:100%;background:var(--card-bg);
+      border:1.5px solid var(--border);border-radius:12px;padding:15px;
+      font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;
+      color:var(--muted);cursor:pointer;margin-bottom:20px;transition:.15s"
+      onmouseenter="this.style.borderColor='var(--accent)'"
+      onmouseleave="this.style.borderColor='var(--border)'">
+      👁 VER APENAS (VISITANTE)
+    </button>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--muted);
+        letter-spacing:1px;text-transform:uppercase">acesso admin</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <label style="font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;
+        letter-spacing:.5px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:5px">E-mail</label>
+      <input id="login-email" type="email" autocomplete="email"
+        placeholder="seu@email.com"
+        style="width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;
+          color:var(--text);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:.95rem;
+          -webkit-appearance:none;outline:none"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-senha').focus()">
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;
+        letter-spacing:.5px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:5px">Senha</label>
+      <input id="login-senha" type="password" autocomplete="current-password"
+        placeholder="••••••••"
+        style="width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;
+          color:var(--text);padding:12px 14px;font-family:'Barlow',sans-serif;font-size:.95rem;
+          -webkit-appearance:none;outline:none"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <button id="btn-login" onclick="fazerLogin()" style="width:100%;background:var(--accent);
+      color:#fff;border:none;border-radius:12px;padding:15px;
+      font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:2px;
+      cursor:pointer;transition:.15s">ENTRAR</button>
+    <div id="login-err" style="color:#e74c3c;font-family:'Barlow Condensed',sans-serif;
+      font-size:.85rem;font-weight:700;text-align:center;margin-top:10px;min-height:20px"></div>
+  </div>
+</div>
+
+<!-- FIREBASE LOADING SPLASH -->
+<div id="fs-splash" style="position:fixed;inset:0;background:#0f0f0f;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:#ff6600;letter-spacing:4px">PROFESSÔ</div>
+  <div style="width:36px;height:36px;border:3px solid #333;border-top-color:#ff6600;
+    border-radius:50%;animation:spin .8s linear infinite"></div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;color:#555;letter-spacing:2px;text-transform:uppercase">Conectando...</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<header class="hdr">
+  <div class="hdr-logo">PROFESS<span>Ô</span></div>
+  <div id="real-clock" style="font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:2px;color:var(--muted);line-height:1;margin-right:4px;min-width:52px;text-align:right"></div>
+  <!-- sync dot -->
+  <div id="sync-dot" title="Sincronizado" style="width:8px;height:8px;border-radius:50%;background:#27ae60;flex-shrink:0;margin-right:4px;transition:background .3s"></div>
+  <!-- role badge -->
+  <span id="role-badge" style="font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:800;
+    padding:3px 8px;border-radius:5px;letter-spacing:1px;text-transform:uppercase;
+    background:#333;color:#aaa;flex-shrink:0">VISITANTE</span>
+  <div class="hdr-btns">
+    <button class="icon-btn admin-only" onclick="openSubModal()" title="Substituição">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    </button>
+    <button class="icon-btn" onclick="fazerLogout()" title="Sair" style="font-size:.8rem">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="app-body">
+
+  <!-- ════════════ SCREEN: CAMPO ════════════ -->
+  <div id="s-campo" class="screen active">
+
+    <!-- Cronômetro -->
+    <div class="chrono-wrap">
+      <div class="period-row">
+        <button class="pbtn on" id="pb1" onclick="setPeriod(1)">1º Tempo</button>
+        <button class="pbtn"    id="pbHT" onclick="setPeriod('ht')" style="flex:.65">Intervalo</button>
+        <button class="pbtn"    id="pb2" onclick="setPeriod(2)">2º Tempo</button>
+      </div>
+      <div class="chrono-time" id="chrono">00:00</div>
+      <div class="chrono-btns">
+        <button class="cbtn cbtn-go" id="btn-go" onclick="toggleChrono()">▶ INICIAR</button>
+        <button class="cbtn cbtn-reset" onclick="resetChrono()">↺</button>
+      </div>
+      <div class="chrono-meta">
+        <div class="cm-pill">Tempo: <b id="dur-label">40min</b></div>
+        <div class="cm-pill">Em campo: <b id="on-count">0</b></div>
+      </div>
+    </div>
+
+    <!-- Alerta subs necessárias -->
+    <div class="alert-bar" id="alert-bar">
+      <div class="alert-bar-title">⚠️ Precisam jogar mais</div>
+      <div class="warn-chips" id="warn-chips"></div>
+    </div>
+
+    <!-- CAMPO VISUAL -->
+    <div class="campo-wrap">
+      <div class="campo" id="campo">
+        <!-- Listras via ::before -->
+        <!-- Linhas do campo -->
+        <div class="campo-lines">
+          <svg viewBox="0 0 680 1050" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <!-- borda externa -->
+            <rect x="10" y="10" width="660" height="1030" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="5"/>
+            <!-- linha do meio -->
+            <line x1="10" y1="525" x2="670" y2="525" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <!-- círculo central -->
+            <circle cx="340" cy="525" r="88" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <circle cx="340" cy="525" r="6" fill="rgba(255,255,255,.55)"/>
+            <!-- GOL topo -->
+            <rect x="255" y="10" width="170" height="22" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <!-- GRANDE ÁREA topo -->
+            <rect x="155" y="10" width="370" height="155" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <!-- ponto pênalti topo -->
+            <circle cx="340" cy="125" r="5" fill="rgba(255,255,255,.55)"/>
+            <!-- GOL base -->
+            <rect x="255" y="1018" width="170" height="22" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <!-- GRANDE ÁREA base -->
+            <rect x="155" y="885" width="370" height="155" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+            <!-- ponto pênalti base -->
+            <circle cx="340" cy="925" r="5" fill="rgba(255,255,255,.55)"/>
+          </svg>
+        </div>
+        <!-- Jogadores renderizados via JS -->
+        <div id="campo-players"></div>
+      </div>
+    </div>
+
+    <!-- Banco -->
+    <div class="bench-card">
+      <div class="bench-label">
+        <span style="display:flex;align-items:center;gap:6px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted)"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          BANCO
+        </span>
+        <span id="bench-cnt" style="font-size:.75rem;color:var(--muted)"></span>
+      </div>
+      <div class="bench-grid" id="bench-grid">
+        <div class="empty" style="width:100%">Nenhum no banco</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════ SCREEN: MINUTAGEM ════════════ -->
+  <div id="s-min" class="screen">
+    <div class="card">
+      <div class="card-title">⏱ MINUTAGEM</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px;line-height:1.6">
+        Cada jogador deve completar <strong style="color:var(--text)" id="min-dur-label">40min</strong>.
+        Pode dividir: ex. 20min no 1º + 20min no 2º.
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;color:var(--muted)">
+          <div style="width:10px;height:10px;border-radius:50%;background:#27ae60;box-shadow:0 0 0 2px #27ae6033"></div>Em campo
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;color:var(--muted)">
+          <div style="width:10px;height:10px;border-radius:50%;background:#f0b429;box-shadow:0 0 0 2px #f0b42933"></div>Já jogou / saiu
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;color:var(--muted)">
+          <div style="width:10px;height:10px;border-radius:50%;background:#e74c3c;box-shadow:0 0 0 2px #e74c3c33"></div>Não entrou
+        </div>
+      </div>
+      <div id="min-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 SUBSTITUIÇÕES</div>
+      <div id="sub-log"><div class="empty">Nenhuma substituição</div></div>
+    </div>
+  </div>
+
+  <!-- ════════════ SCREEN: ELENCO ════════════ -->
+  <div id="s-elenco" class="screen">
+    <div class="card">
+      <div class="card-title" id="form-title">➕ NOVO JOGADOR</div>
+      <div class="field">
+        <label class="form-label">Nome</label>
+        <input type="text" id="f-nome" class="form-input" placeholder="Nome do atleta">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label class="form-label">Posição</label>
+          <select id="f-pos" class="form-input">
+            <option value="G">Goleiro (G)</option>
+            <option value="DF">Zagueiro (DF)</option>
+            <option value="LAT">Lateral (LAT)</option>
+            <option value="MC">Meio-Campo (MC)</option>
+            <option value="PT">Ponta (PT)</option>
+            <option value="AT">Atacante (AT)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="form-label">Nº Camisa</label>
+          <input type="number" id="f-num" class="form-input" placeholder="Ex: 10" min="1" max="99">
+        </div>
+      </div>
+      <input type="hidden" id="f-edit-id">
+      <button class="btn-main" id="btn-save-player" onclick="savePlayer()">SALVAR JOGADOR</button>
+      <button class="btn-ghost" id="btn-cancel-edit" onclick="cancelEditPlayer()" style="display:none">CANCELAR</button>
+    </div>
+
+    <div class="section-lbl">ELENCO</div>
+    <div class="card" id="roster-list"><div class="empty">Nenhum atleta cadastrado</div></div>
+  </div>
+
+  <!-- ════════════ SCREEN: CONFIG ════════════ -->
+  <div id="s-cfg" class="screen">
+
+    <div class="card">
+      <div class="card-title">🎨 CORES DO TIME</div>
+      <div class="color-grid">
+        <div class="color-swatch" onclick="document.getElementById('pick-kit').click()">
+          <div class="swatch-preview" id="sw-kit"></div>
+          <div>
+            <div class="swatch-label">Camisa</div>
+            <div class="swatch-hex" id="sw-kit-hex">#111111</div>
+          </div>
+          <input type="color" id="pick-kit" value="#111111" oninput="applyColor('kit',this.value)">
+        </div>
+        <div class="color-swatch" onclick="document.getElementById('pick-kit-txt').click()">
+          <div class="swatch-preview" id="sw-kit-txt"></div>
+          <div>
+            <div class="swatch-label">Texto kit</div>
+            <div class="swatch-hex" id="sw-kit-txt-hex">#ffffff</div>
+          </div>
+          <input type="color" id="pick-kit-txt" value="#ffffff" oninput="applyColor('kit-text',this.value)">
+        </div>
+        <div class="color-swatch" onclick="document.getElementById('pick-accent').click()">
+          <div class="swatch-preview" id="sw-accent"></div>
+          <div>
+            <div class="swatch-label">Destaque</div>
+            <div class="swatch-hex" id="sw-accent-hex">#ff6600</div>
+          </div>
+          <input type="color" id="pick-accent" value="#ff6600" oninput="applyColor('accent',this.value)">
+        </div>
+        <div class="color-swatch" onclick="document.getElementById('pick-field').click()">
+          <div class="swatch-preview" id="sw-field"></div>
+          <div>
+            <div class="swatch-label">Campo</div>
+            <div class="swatch-hex" id="sw-field-hex">#1e6b1e</div>
+          </div>
+          <input type="color" id="pick-field" value="#1e6b1e" oninput="applyColor('field',this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ JOGO</div>
+      <div class="cfg-row">
+        <span class="cfg-label">Duração de cada tempo</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="changeDur(-5)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:1rem">−</button>
+          <span class="cfg-val" id="dur-cfg">40 min</span>
+          <button onclick="changeDur(5)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:1rem">+</button>
+        </div>
+      </div>
+      <div class="cfg-row">
+        <span class="cfg-label">Nome do app</span>
+        <input type="text" id="cfg-appname" class="form-input" style="width:140px;padding:8px 10px;font-size:.9rem" value="PROFESSÔ" onchange="saveAppName()">
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:6px">
+      <div class="card-title" style="color:var(--red)">⚠️ RESETAR PARTIDA</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5">
+        Zera cronômetro, minutagem e substituições. Jogadores são mantidos.
+      </div>
+      <button onclick="resetMatch()" style="width:100%;padding:13px;background:rgba(231,76,60,.15);color:var(--red);border:1.5px solid rgba(231,76,60,.3);border-radius:11px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer">RESETAR PARTIDA</button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nb on" id="nb-campo" onclick="goScreen('campo',this)">
+    <span class="nb-icon">
+      <!-- campo: retângulo com linha do meio -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="18" rx="1"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+        <circle cx="12" cy="12" r="3"/>
+        <line x1="9" y1="3" x2="9" y2="6"/><line x1="15" y1="3" x2="15" y2="6"/>
+        <line x1="9" y1="18" x2="9" y2="21"/><line x1="15" y1="18" x2="15" y2="21"/>
+      </svg>
+    </span>Campo
+  </button>
+  <button class="nb" id="nb-min" onclick="goScreen('min',this)">
+    <span class="nb-icon">
+      <!-- relógio / stopwatch -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 14.5 15.5"/>
+        <line x1="9" y1="3" x2="15" y2="3"/><line x1="12" y1="3" x2="12" y2="5"/>
+      </svg>
+    </span>Tempo
+  </button>
+  <button class="nb admin-only" id="nb-elenco" onclick="goScreen('elenco',this)">
+    <span class="nb-icon">
+      <!-- pessoa + lista -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8" cy="7" r="4"/>
+        <path d="M2 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+        <line x1="16" y1="8" x2="22" y2="8"/><line x1="16" y1="12" x2="22" y2="12"/><line x1="16" y1="16" x2="20" y2="16"/>
+      </svg>
+    </span>Elenco
+  </button>
+  <button class="nb" id="nb-cfg" onclick="goScreen('cfg',this)">
+    <span class="nb-icon">
+      <!-- engrenagem -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </span>Config
+  </button>
+</nav>
+
+<!-- MODAL: SLOT (colocar/tirar jogador de posição específica) -->
+<div class="overlay" id="modal-slot" onclick="closeBg(event,'modal-slot')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="slot-title">Posição</div>
+    <div class="sheet-sub" id="slot-sub">Selecione um jogador para escalar</div>
+    <div id="slot-list"></div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-ghost" onclick="closeModal('modal-slot')">CANCELAR</button>
+      <button class="mbtn mbtn-del"   id="slot-remove-btn" onclick="removeFromSlot()">TIRAR</button>
+      <button class="mbtn mbtn-ok"    onclick="confirmSlot()">ESCALAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SUBSTITUIÇÃO -->
+<div class="overlay" id="modal-sub" onclick="closeBg(event,'modal-sub')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🔄 SUBSTITUIÇÃO</div>
+    <div class="sheet-sub">Selecione quem SAI e quem ENTRA</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px;color:var(--muted);margin-bottom:6px">SAI DE CAMPO</div>
+    <div id="sub-out-list"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px;color:var(--muted);margin:10px 0 6px">ENTRA EM CAMPO</div>
+    <div id="sub-in-list"></div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-ghost" onclick="closeModal('modal-sub')">CANCELAR</button>
+      <button class="mbtn mbtn-ok"    onclick="confirmSub()">CONFIRMAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PLAYER INFO (clique no chip do banco) -->
+<div class="overlay" id="modal-player" onclick="closeBg(event,'modal-player')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="pm-name"></div>
+    <div class="sheet-sub"   id="pm-sub"></div>
+    <div id="pm-content"></div>
+    <div class="modal-btns" style="margin-top:14px">
+      <button class="mbtn mbtn-ghost" onclick="closeModal('modal-player')">FECHAR</button>
+      <button class="mbtn mbtn-ok"    id="pm-sub-btn" onclick="openSubFromPlayer()">🔄 SUBSTITUIR</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// ══════════════════════════════════════════════════════
+//  POSIÇÕES FIXAS DO CAMPO — baseado na imagem de referência
+//  11 slots numerados como na imagem (1=goleiro, 9=centroavante, etc)
+//  x,y em % do campo (0,0 = canto superior esquerdo)
+// ══════════════════════════════════════════════════════
+const SLOTS = [
+  // Num  pos   x%    y%
+  { n:1,  pos:'G',  x:50,  y:91 },  // goleiro
+  { n:2,  pos:'DF', x:28,  y:79 },  // zagueiro esq
+  { n:3,  pos:'DF', x:72,  y:79 },  // zagueiro dir
+  { n:4,  pos:'DF', x:10,  y:67 },  // lateral esq
+  { n:5,  pos:'DF', x:50,  y:73 },  // volante central
+  { n:6,  pos:'DF', x:90,  y:67 },  // lateral dir
+  { n:7,  pos:'MC', x:10,  y:40 },  // meia/ponta esq — campo adversário
+  { n:8,  pos:'MC', x:33,  y:34 },  // meia centro esq — campo adversário
+  { n:9,  pos:'AT', x:50,  y:20 },  // centroavante
+  { n:10, pos:'MC', x:67,  y:34 },  // meia centro dir — campo adversário
+  { n:11, pos:'MC', x:90,  y:40 },  // meia/ponta dir — campo adversário
+];
+
+// ══════════════════════════════════════════════════════
+//  FIREBASE
+// ══════════════════════════════════════════════════════
+import { initializeApp }                          from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, collection,
+         onSnapshot, setDoc, updateDoc,
+         addDoc, deleteDoc, getDoc,
+         serverTimestamp }                        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword,
+         signInAnonymously, signOut,
+         onAuthStateChanged }                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyD653TFNExvUuAEKHRgI8AfLQsuGdIf2QU",
+  authDomain:        "professo-a4622.firebaseapp.com",
+  projectId:         "professo-a4622",
+  storageBucket:     "professo-a4622.firebasestorage.app",
+  messagingSenderId: "1047482697386",
+  appId:             "1:1047482697386:web:e58908265af0b4cf9972d3"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+// Refs
+const colPlayers  = collection(db, 'players');
+const docMatch    = doc(db, 'game', 'match');
+const docSettings = doc(db, 'game', 'settings');
+
+// ── Nível de acesso ───────────────────────────────────
+let isAdmin   = false;   // true = e-mail/senha, false = visitante
+let isVisitor = false;   // true = anônimo, só leitura
+
+// ══════════════════════════════════════════════════════
+//  STATE  (local — atualizado pelos listeners)
+// ══════════════════════════════════════════════════════
+let players  = [];
+let slotMap  = {};
+let match    = { period:1, running:false, elapsed:0, duration:40, subs:[] };
+let colors   = { kit:'#111111', 'kit-text':'#ffffff', accent:'#ff6600', field:'#1e6b1e' };
+let appName  = 'PROFESSÔ';
+
+let chronoStart = null;
+let chronoTick  = null;
+
+// modal state
+let activeSlotN   = null;
+let slotPickId    = null;
+let subOutId      = null;
+let subInId       = null;
+let playerModalId = null;
+
+// ── Sync indicator ────────────────────────────────────
+function setSyncDot(state) {
+  // state: 'ok' | 'saving' | 'offline'
+  const el = document.getElementById('sync-dot');
+  if (!el) return;
+  const colors_ = { ok:'#27ae60', saving:'#f0b429', offline:'#e74c3c' };
+  el.style.background = colors_[state] || '#555';
+  el.title = state === 'ok' ? 'Sincronizado' : state === 'saving' ? 'Salvando...' : 'Sem conexão';
+}
+
+// ── Persist helpers ───────────────────────────────────
+async function savePlayers() {
+  // jogadores são salvos individualmente por doc
+}
+async function saveMatch() {
+  if (!isAdmin) return;
+  setSyncDot('saving');
+  try {
+    await setDoc(docMatch, {
+      period:   match.period,
+      running:  false,          // nunca salva running=true (segurança)
+      elapsed:  match.elapsed,
+      duration: match.duration,
+      subs:     match.subs,
+      slotMap:  slotMap,
+      updatedAt: serverTimestamp()
+    });
+    setSyncDot('ok');
+  } catch(e) { setSyncDot('offline'); console.warn(e); }
+}
+async function saveSettings() {
+  if (!isAdmin) return;
+  setSyncDot('saving');
+  try {
+    await setDoc(docSettings, { colors, appName, updatedAt: serverTimestamp() });
+    setSyncDot('ok');
+  } catch(e) { setSyncDot('offline'); }
+}
+
+// Alias global SS para compatibilidade com código existente
+function SS(key, val) {
+  if (key === 'prof_match' || key === 'prof_slotmap') {
+    saveMatch();
+  } else if (key === 'prof_colors' || key === 'prof_appname') {
+    saveSettings();
+  }
+  // players são salvos individualmente via addPlayerFS / updatePlayerFS
+}
+
+// ── Player CRUD no Firestore ──────────────────────────
+async function addPlayerFS(p) {
+  if (!isAdmin) return null;
+  setSyncDot('saving');
+  try {
+    const ref = await addDoc(colPlayers, playerToFS(p));
+    setSyncDot('ok');
+    return ref.id;
+  } catch(e) { setSyncDot('offline'); console.warn(e); }
+}
+async function updatePlayerFS(p) {
+  if (!isAdmin) return;
+  if (!p.firestoreId) return;
+  setSyncDot('saving');
+  try {
+    await setDoc(doc(db,'players',p.firestoreId), playerToFS(p));
+    setSyncDot('ok');
+  } catch(e) { setSyncDot('offline'); console.warn(e); }
+}
+async function deletePlayerFS(firestoreId) {
+  if (!isAdmin) return;
+  setSyncDot('saving');
+  try {
+    await deleteDoc(doc(db,'players',firestoreId));
+    setSyncDot('ok');
+  } catch(e) { setSyncDot('offline'); }
+}
+function playerToFS(p) {
+  return {
+    name: p.name, pos: p.pos, num: p.num ?? null,
+    onField: p.onField || false,
+    accSecs: p.accSecs || 0,
+    enteredAt: p._enteredAt || 0,
+    hasPlayed: p.hasPlayed || false,
+    wasOnField: p.wasOnField || false,
+  };
+}
+function playerFromFS(id, data) {
+  return {
+    firestoreId: id,
+    id: id,  // usa firestoreId como id local
+    name: data.name, pos: data.pos, num: data.num,
+    onField: data.onField || false,
+    accSecs: data.accSecs || 0,
+    _enteredAt: data.enteredAt || 0,
+    _periodSecs: 0,
+    hasPlayed: data.hasPlayed || false,
+    wasOnField: data.wasOnField || false,
+  };
+}
+
+// ══════════════════════════════════════════════════════
+//  BOOT — inicia listeners Firestore
+// ══════════════════════════════════════════════════════
+function boot() {
+  applyColors();
+  applyAppName();
+  updateChronoDisplay();
+  startRealClock();
+  showSplash(true);
+
+  onAuthStateChanged(auth, user => {
+    if (user && !user.isAnonymous) {
+      // Admin autenticado com e-mail/senha
+      isAdmin = true; isVisitor = false;
+      applyRole();
+      startListeners();
+    } else if (user && user.isAnonymous) {
+      // Visitante anônimo
+      isAdmin = false; isVisitor = true;
+      applyRole();
+      startListeners();
+    } else {
+      // Não autenticado — mostra tela de login
+      showSplash(false);
+      showLoginScreen(true);
+    }
+  });
+}
+boot();
+
+// ── Tela de login ─────────────────────────────────────
+function showLoginScreen(on) {
+  document.getElementById('login-screen').style.display = on ? 'flex' : 'none';
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-senha').value = '';
+}
+
+async function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const err   = document.getElementById('login-err');
+  err.textContent = '';
+  if (!email || !senha) { err.textContent = 'Preencha e-mail e senha.'; return; }
+  const btn = document.getElementById('btn-login');
+  btn.textContent = 'ENTRANDO...'; btn.disabled = true;
+  try {
+    await signInWithEmailAndPassword(auth, email, senha);
+    showLoginScreen(false);
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found':     'E-mail não cadastrado.',
+      'auth/wrong-password':     'Senha incorreta.',
+      'auth/invalid-email':      'E-mail inválido.',
+      'auth/too-many-requests':  'Muitas tentativas. Tente mais tarde.',
+      'auth/invalid-credential': 'E-mail ou senha incorretos.',
+    };
+    err.textContent = msgs[e.code] || 'Erro ao entrar.';
+  } finally {
+    btn.textContent = 'ENTRAR'; btn.disabled = false;
+  }
+}
+
+async function entrarComoVisitante() {
+  try {
+    await signInAnonymously(auth);
+    showLoginScreen(false);
+  } catch(e) {
+    document.getElementById('login-err').textContent = 'Erro de conexão.';
+  }
+}
+
+async function fazerLogout() {
+  if (!confirm('Sair da conta?')) return;
+  if (match.running) pauseChrono();
+  await signOut(auth);
+  isAdmin = false; isVisitor = false;
+  showLoginScreen(true);
+  showToast('👋 Saiu');
+}
+
+// ── Aplica permissões na UI ───────────────────────────
+function applyRole() {
+  // Elementos só visíveis para admin
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = isAdmin ? '' : 'none';
+  });
+  // Badge no header
+  const badge = document.getElementById('role-badge');
+  if (badge) {
+    badge.textContent  = isAdmin ? 'ADMIN' : 'VISITANTE';
+    badge.style.background    = isAdmin ? 'var(--accent)' : '#333';
+    badge.style.color         = isAdmin ? '#fff' : '#aaa';
+  }
+}
+
+function showSplash(on) {
+  let sp = document.getElementById('fs-splash');
+  if (!sp) return;
+  sp.style.display = on ? 'flex' : 'none';
+}
+
+function startListeners() {
+  // ── Players ────────────────────────────────────────
+  onSnapshot(colPlayers, snap => {
+    players = snap.docs.map(d => playerFromFS(d.id, d.data()));
+    renderAll();
+    showSplash(false);
+    setSyncDot('ok');
+  }, err => { setSyncDot('offline'); console.warn(err); showSplash(false); });
+
+  // ── Match + slotMap ────────────────────────────────
+  onSnapshot(docMatch, snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    match.period   = d.period   ?? 1;
+    match.elapsed  = d.elapsed  ?? 0;
+    match.duration = d.duration ?? 40;
+    match.subs     = d.subs     ?? [];
+    match.running  = false; // nunca pega running do server
+    slotMap        = d.slotMap  ?? {};
+    renderAll();
+    setSyncDot('ok');
+  }, err => setSyncDot('offline'));
+
+  // ── Settings ───────────────────────────────────────
+  onSnapshot(docSettings, snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    if (d.colors)  { colors = d.colors; applyColors(); }
+    if (d.appName) { appName = d.appName; applyAppName(); }
+  }, err => setSyncDot('offline'));
+}
+
+// ══════════════════════════════════════════════════════
+//  RELÓGIO REAL
+// ══════════════════════════════════════════════════════
+function startRealClock() {
+  function tick() {
+    const el = document.getElementById('real-clock');
+    if (!el) return;
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    el.textContent = h + ':' + m;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ══════════════════════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════════════════════
+function goScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('s-' + id).classList.add('active');
+  if (btn) btn.classList.add('on');
+  window.scrollTo({ top:0, behavior:'smooth' });
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════
+//  CRONÔMETRO
+// ══════════════════════════════════════════════════════
+function toggleChrono() {
+  if (match.period === 'ht') { showToast('⏸ Está no intervalo'); return; }
+  match.running ? pauseChrono() : startChrono();
+}
+function startChrono() {
+  match.running = true;
+  chronoStart = Date.now() - match.elapsed * 1000;
+  chronoTick = setInterval(tick, 500);
+  document.getElementById('btn-go').textContent = '⏸ PAUSAR';
+  document.getElementById('btn-go').className   = 'cbtn cbtn-pause';
+  SS('prof_match', match);
+}
+function pauseChrono() {
+  match.running = false;
+  clearInterval(chronoTick); chronoTick = null;
+  flushPlayerTimes();
+  document.getElementById('btn-go').textContent = '▶ CONTINUAR';
+  document.getElementById('btn-go').className   = 'cbtn cbtn-go';
+  SS('prof_match', match);
+  renderAll();
+}
+function resetChrono() {
+  if (match.running) pauseChrono();
+  match.elapsed = 0;
+  SS('prof_match', match);
+  updateChronoDisplay();
+}
+function setPeriod(p) {
+  if (match.running) pauseChrono();
+  match.period = p; match.elapsed = 0;
+  const go = document.getElementById('btn-go');
+  if (p === 'ht') {
+    go.textContent = '— INTERVALO —';
+    go.className   = 'cbtn cbtn-reset';
+  } else {
+    go.textContent = '▶ INICIAR';
+    go.className   = 'cbtn cbtn-go';
+  }
+  ['1','HT','2'].forEach(x => {
+    const b = document.getElementById('pb' + x);
+    if (b) b.classList.toggle('on', String(match.period) === (x==='HT'?'ht':x));
+  });
+  updateChronoDisplay();
+  SS('prof_match', match);
+}
+function tick() {
+  match.elapsed = Math.floor((Date.now() - chronoStart) / 1000);
+  if (match.elapsed % 5 === 0) { flushPlayerTimes(); checkWarnings(); SS('prof_match', match); }
+  updateChronoDisplay();
+  renderFieldMinutes();
+}
+function flushPlayerTimes() {
+  if (!match.running) return;
+  players.forEach(p => {
+    if (p.onField) {
+      p._periodSecs = Math.max(0, match.elapsed - (p._enteredAt || 0));
+    }
+  });
+}
+function updateChronoDisplay() {
+  const s = match.elapsed, m = Math.floor(s/60), sec = s%60;
+  const dur = match.duration * 60;
+  const el = document.getElementById('chrono');
+  if (!el) return;
+  el.textContent = `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  const remaining = dur - s;
+  el.className = s >= dur ? 'chrono-time over' : remaining <= 300 ? 'chrono-time warn' : 'chrono-time';
+
+  ['1','HT','2'].forEach(x => {
+    const b = document.getElementById('pb' + x);
+    if (b) b.classList.toggle('on', String(match.period) === (x==='HT'?'ht':x));
+  });
+  const dl = document.getElementById('dur-label');
+  if (dl) dl.textContent = match.duration + 'min';
+  const onCount = document.getElementById('on-count');
+  if (onCount) onCount.textContent = players.filter(p=>p.onField).length;
+}
+
+// ══════════════════════════════════════════════════════
+//  PLAYER TIME TRACKING
+// ══════════════════════════════════════════════════════
+function getTotal(p) {
+  let acc = p.accSecs || 0;
+  if (p.onField) {
+    const period = Math.max(0, match.elapsed - (p._enteredAt || 0));
+    acc += period;
+  }
+  return acc;
+}
+function getTotalMins(p) { return Math.floor(getTotal(p) / 60); }
+
+function checkWarnings() {
+  const dur = match.duration * 60;
+  const needy = players.filter(p => !p.onField && getTotal(p) < dur && getTotal(p) > 0);
+  const bar = document.getElementById('alert-bar');
+  const chips = document.getElementById('warn-chips');
+  if (!bar) return;
+  if (needy.length && match.running) {
+    bar.classList.add('show');
+    chips.innerHTML = needy.map(p =>
+      `<div class="warn-chip">${p.name} (${getTotalMins(p)}′)</div>`
+    ).join('');
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  CAMPO RENDER
+// ══════════════════════════════════════════════════════
+function renderField() {
+  const container = document.getElementById('campo-players');
+  if (!container) return;
+
+  const html = SLOTS.map(slot => {
+    const pid = slotMap[slot.n];
+    const p   = pid != null ? players.find(x => x.id === pid) : null;
+    const filled = !!p;
+    const totalM = p ? getTotalMins(p) : 0;
+    const dur    = match.duration;
+    const done   = p && totalM >= dur;
+    const wt     = p && !done && totalM >= dur * 0.8 && match.running;
+
+    return `<div class="slot${filled?' filled':''}${done?' done':''}${wt?' warn-time':''}"
+      style="left:${slot.x}%;top:${slot.y}%"
+      onclick="openSlotModal(${slot.n})"
+    >
+      <div class="slot-ring">
+        <span class="slot-num">${slot.n}</span>
+        <span class="slot-initials">${p ? initials(p.name) : ''}</span>
+      </div>
+      <div class="slot-name">${p ? shortName(p.name) : ''}</div>
+      <div class="slot-min">${filled ? totalM+'′' : ''}</div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = html;
+}
+
+function renderFieldMinutes() {
+  // Atualiza só os minutos e classes, sem rerender tudo
+  SLOTS.forEach(slot => {
+    const pid = slotMap[slot.n];
+    const p   = pid != null ? players.find(x => x.id === pid) : null;
+    if (!p) return;
+    const totalM = getTotalMins(p);
+    const dur    = match.duration;
+    const done   = totalM >= dur;
+    const wt     = !done && totalM >= dur * 0.8 && match.running;
+
+    // find element via position — rebuild entirely is simpler on tick
+    const el = document.querySelector(`#campo-players .slot:nth-child(${SLOTS.indexOf(slot)+1})`);
+    if (!el) return;
+    const minEl = el.querySelector('.slot-min');
+    if (minEl) minEl.textContent = totalM + '′';
+    el.classList.toggle('done', done);
+    el.classList.toggle('warn-time', wt && !done);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  BANCO RENDER
+// ══════════════════════════════════════════════════════
+function renderBench() {
+  const grid = document.getElementById('bench-grid');
+  const cnt  = document.getElementById('bench-cnt');
+  if (!grid) return;
+
+  const bench = players.filter(p => !p.onField);
+  if (cnt) cnt.textContent = `(${bench.length})`;
+  if (!bench.length) {
+    grid.innerHTML = '<div class="empty" style="width:100%">Todos em campo</div>';
+    return;
+  }
+  grid.innerHTML = bench.map(p => {
+    const m = getTotalMins(p);
+    return `<div class="bench-chip" onclick="openPlayerModal('${p.id}')">
+      <div class="bench-chip-dot"></div>
+      <div class="bench-chip-name">${shortName(p.name)}</div>
+      ${m > 0 ? `<div class="bench-chip-min">${m}′</div>` : ''}
+      <div class="bench-chip-pos">${p.pos}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  MINUTAGEM
+// ══════════════════════════════════════════════════════
+// Estado da bolinha:
+//  🟢 verde   — está em campo agora
+//  🟡 amarelo — já jogou e saiu
+//  🔴 vermelho — nunca entrou
+function playerDotColor(p) {
+  if (p.onField)    return '#27ae60';
+  if (p.wasOnField) return '#f0b429';
+  return '#e74c3c';
+}
+function playerDotTitle(p) {
+  if (p.onField)    return 'Em campo';
+  if (p.wasOnField) return 'Já jogou';
+  return 'Não entrou';
+}
+
+function buildMinRow(p) {
+  const durS   = match.duration * 60;
+  const total  = getTotal(p);
+  const m      = Math.floor(total / 60);
+  const pct    = Math.min(100, Math.round(total / durS * 100));
+  const ok     = total >= durS;
+  const part   = total > 0 && !ok;
+  const barCl  = ok ? 'ok' : part ? 'part' : 'zero';
+  const numCl  = ok ? 'ok' : part ? 'part' : 'zero';
+  const need   = ok ? '✅' : total > 0 ? `-${match.duration - m}min` : '—';
+  const needCl = !ok && total > 0 ? 'urgent' : '';
+  const dotColor = playerDotColor(p);
+  const dotTitle = playerDotTitle(p);
+  return `<div class="min-row" onclick="openPlayerModal('${p.id}')">
+    <div title="${dotTitle}" style="width:11px;height:11px;border-radius:50%;flex-shrink:0;
+      background:${dotColor};box-shadow:0 0 0 3px ${dotColor}30;transition:background .3s"></div>
+    <div class="min-name">${p.name}</div>
+    <div class="min-pos">${p.pos}</div>
+    <div class="min-bar-wrap">
+      <div class="min-bar-bg"><div class="min-bar-fill ${barCl}" style="width:${pct}%"></div></div>
+    </div>
+    <div class="min-num ${numCl}">${m}′</div>
+    <div class="min-need ${needCl}">${need}</div>
+  </div>`;
+}
+
+function renderMinutagem() {
+  const list = document.getElementById('min-list');
+  const dl   = document.getElementById('min-dur-label');
+  if (!list) return;
+  if (dl) dl.textContent = match.duration + 'min';
+
+  if (!players.length) { list.innerHTML = '<div class="empty">Nenhum atleta</div>'; return; }
+
+  const inField  = players.filter(p => p.onField)
+                          .sort((a,b) => getTotal(b) - getTotal(a));
+  const reserves = players.filter(p => !p.onField)
+                          .sort((a,b) => getTotal(b) - getTotal(a));
+
+  let html = '';
+
+  // ── SEÇÃO: EM CAMPO ──────────────────────────────────
+  html += `<div style="
+    font-family:'Bebas Neue',sans-serif;font-size:.82rem;letter-spacing:2px;
+    color:var(--muted);margin:0 0 6px 2px;display:flex;align-items:center;gap:8px">
+    <div style="width:8px;height:8px;border-radius:50%;background:#27ae60"></div>
+    EM CAMPO <span style="font-size:.72rem;color:#27ae60">(${inField.length})</span>
+  </div>`;
+
+  if (inField.length) {
+    html += inField.map(buildMinRow).join('');
+  } else {
+    html += `<div class="empty" style="padding:12px 0">Nenhum jogador em campo</div>`;
+  }
+
+  // ── SEPARADOR ────────────────────────────────────────
+  html += `<div style="height:1px;background:var(--border);margin:14px 0 10px"></div>`;
+
+  // ── SEÇÃO: RESERVAS ──────────────────────────────────
+  html += `<div style="
+    font-family:'Bebas Neue',sans-serif;font-size:.82rem;letter-spacing:2px;
+    color:var(--muted);margin:0 0 6px 2px;display:flex;align-items:center;gap:8px">
+    <div style="width:8px;height:8px;border-radius:50%;background:#555"></div>
+    RESERVAS <span style="font-size:.72rem;color:var(--muted)">(${reserves.length})</span>
+  </div>`;
+
+  if (reserves.length) {
+    html += reserves.map(buildMinRow).join('');
+  } else {
+    html += `<div class="empty" style="padding:12px 0">Todos em campo</div>`;
+  }
+
+  list.innerHTML = html;
+
+  // Sub log
+  const sl = document.getElementById('sub-log');
+  if (sl) {
+    if (!match.subs.length) { sl.innerHTML = '<div class="empty">Nenhuma substituição</div>'; return; }
+    sl.innerHTML = [...match.subs].reverse().map(s => {
+      const pi = players.find(x => x.id === s.inId);
+      const po = players.find(x => x.id === s.outId);
+      const per = s.period===1?'1T':s.period===2?'2T':'INT';
+      return `<div class="sub-row">
+        <div class="sub-time-badge">${s.timeStr} <span style="font-size:.6rem">${per}</span></div>
+        <span class="sub-in">↓ ${pi?.name||'?'}</span>
+        <span style="color:#333;margin:0 4px">/</span>
+        <span class="sub-out">↑ ${po?.name||'?'}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  ELENCO (setup)
+// ══════════════════════════════════════════════════════
+async function savePlayer() {
+  const nome = document.getElementById('f-nome').value.trim();
+  const pos  = document.getElementById('f-pos').value;
+  const num  = parseInt(document.getElementById('f-num').value) || null;
+  const eid  = document.getElementById('f-edit-id').value;
+  if (!nome) { showToast('⚠️ Informe o nome'); return; }
+
+  if (eid) {
+    const p = players.find(x => x.id === eid);
+    if (p) { p.name = nome; p.pos = pos; p.num = num; await updatePlayerFS(p); }
+    cancelEditPlayer();
+    showToast('✅ Atleta atualizado');
+  } else {
+    const newP = { name: nome, pos, num, onField: false, accSecs: 0,
+                   _enteredAt: 0, _periodSecs: 0, hasPlayed: false, wasOnField: false };
+    await addPlayerFS(newP);
+    document.getElementById('f-nome').value = '';
+    showToast('✅ ' + nome + ' adicionado');
+  }
+}
+function editPlayer(id) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('f-nome').value     = p.name;
+  document.getElementById('f-pos').value      = p.pos;
+  document.getElementById('f-num').value      = p.num || '';
+  document.getElementById('f-edit-id').value  = p.id;
+  document.getElementById('form-title').textContent       = '✏️ EDITAR ATLETA';
+  document.getElementById('btn-cancel-edit').style.display = 'block';
+  goScreen('elenco');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function cancelEditPlayer() {
+  document.getElementById('f-nome').value      = '';
+  document.getElementById('f-edit-id').value   = '';
+  document.getElementById('form-title').textContent        = '➕ NOVO JOGADOR';
+  document.getElementById('btn-cancel-edit').style.display = 'none';
+}
+async function removePlayer(id) {
+  if (!confirm('Remover atleta?')) return;
+  const p = players.find(x => x.id === id);
+  if (p) await deletePlayerFS(p.firestoreId || id);
+  Object.keys(slotMap).forEach(k => { if (slotMap[k] === id) delete slotMap[k]; });
+  await saveMatch();
+  showToast('🗑️ Removido');
+}
+function renderRoster() {
+  const el = document.getElementById('roster-list');
+  if (!el) return;
+  if (!players.length) { el.innerHTML = '<div class="empty">Nenhum atleta</div>'; return; }
+  el.innerHTML = players.map(p => {
+    const m = getTotalMins(p);
+    return `<div class="player-row">
+      <div class="player-avatar">${initials(p.name)}</div>
+      <div class="player-info">
+        <div class="player-name-txt">${p.name}${p.num?` <span style="color:var(--muted);font-size:.75rem">#${p.num}</span>`:''}</div>
+        <div class="player-meta">${p.pos} · ${m}min · ${p.onField?'<span style="color:var(--green)">em campo</span>':'banco'}</div>
+      </div>
+      <button class="field-toggle ${p.onField?'ft-on':'ft-off'}" onclick="toggleField('${p.id}')">${p.onField?'BANCO':'CAMPO'}</button>
+      <button class="mini-btn" onclick="editPlayer('${p.id}')">✏️</button>
+      <button class="mini-btn" onclick="removePlayer('${p.id}')">🗑️</button>
+    </div>`;
+  }).join('');
+}
+async function toggleField(id) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  if (p.onField) {
+    p.accSecs += Math.max(0, match.elapsed - (p._enteredAt||0));
+    p.onField = false; p._enteredAt = 0; p._periodSecs = 0;
+    p.wasOnField = true;
+    Object.keys(slotMap).forEach(k => { if (slotMap[k] === id) delete slotMap[k]; });
+  } else {
+    p.onField = true; p._enteredAt = match.elapsed; p._periodSecs = 0;
+    p.hasPlayed = true;
+  }
+  await updatePlayerFS(p);
+  await saveMatch();
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL SLOT (clique no campo)
+// ══════════════════════════════════════════════════════
+function openSlotModal(n) {
+  activeSlotN = n;
+  slotPickId  = slotMap[n] ?? null;
+  const slot  = SLOTS.find(s => s.n === n);
+  const curP  = slotPickId != null ? players.find(p => p.id === slotPickId) : null;
+
+  document.getElementById('slot-title').textContent = `Posição ${n} — ${slot?.pos||''}`;
+  document.getElementById('slot-sub').textContent   = curP ? `Atual: ${curP.name}` : 'Vazio — escolha um jogador';
+
+  const rmBtn = document.getElementById('slot-remove-btn');
+  rmBtn.style.display = curP ? 'flex' : 'none';
+
+  // Lista: todos (em campo ou banco), exceto já em outro slot
+  const usedIds = new Set(Object.entries(slotMap).filter(([k])=>parseInt(k)!==n).map(([,v])=>v));
+  const available = players.filter(p => !usedIds.has(p.id));
+
+  document.getElementById('slot-list').innerHTML = available.length
+    ? available.map(p => {
+        const m = getTotalMins(p);
+        const isPicked = p.id === slotPickId;
+        return `<div class="sel-row${isPicked?' picked':''}" id="slsel-${p.id}" onclick="pickSlotPlayer('${p.id}')">
+          <div class="sel-avatar">${initials(p.name)}</div>
+          <div class="sel-info">
+            <div class="sel-name">${p.name}${p.num?` <span style="color:var(--muted);font-size:.7rem">#${p.num}</span>`:''}</div>
+            <div class="sel-detail">${p.pos} · ${p.onField?'em campo':'banco'}</div>
+          </div>
+          <div class="sel-min ${m===0?'z':''}">${m>0?m+'′':'—'}</div>
+        </div>`;
+      }).join('')
+    : '<div class="empty">Nenhum atleta disponível</div>';
+
+  document.getElementById('modal-slot').classList.add('open');
+}
+function pickSlotPlayer(id) {
+  slotPickId = id;
+  document.querySelectorAll('[id^="slsel-"]').forEach(el => el.classList.remove('picked'));
+  const el = document.getElementById('slsel-' + id);
+  if (el) el.classList.add('picked');
+}
+async function confirmSlot() {
+  if (slotPickId == null) { showToast('⚠️ Selecione um jogador'); return; }
+  const n      = activeSlotN;
+  const prevId = slotMap[n] ?? null;
+  const newP   = players.find(p => p.id === slotPickId);
+  if (!newP) return;
+
+  const saves = [];
+  // Remove jogador anterior do campo (se diferente)
+  if (prevId != null && prevId !== slotPickId) {
+    const prev = players.find(p => p.id === prevId);
+    if (prev && prev.onField) {
+      prev.accSecs += Math.max(0, match.elapsed - (prev._enteredAt||0));
+      prev.onField = false; prev._enteredAt = 0; prev._periodSecs = 0;
+      prev.wasOnField = true;
+      saves.push(updatePlayerFS(prev));
+    }
+  }
+  // Coloca novo jogador em campo
+  if (!newP.onField) {
+    newP.onField = true; newP._enteredAt = match.elapsed; newP._periodSecs = 0;
+    newP.hasPlayed = true;
+  }
+  saves.push(updatePlayerFS(newP));
+  slotMap[n] = slotPickId;
+  saves.push(saveMatch());
+  await Promise.all(saves);
+  closeModal('modal-slot');
+  showToast(`✅ ${newP.name} escalado na posição ${n}`);
+  renderAll();
+}
+async function removeFromSlot() {
+  const n   = activeSlotN;
+  const pid = slotMap[n];
+  if (pid == null) { closeModal('modal-slot'); return; }
+  const p = players.find(x => x.id === pid);
+  if (p && p.onField) {
+    p.accSecs += Math.max(0, match.elapsed - (p._enteredAt||0));
+    p.onField = false; p._enteredAt = 0; p._periodSecs = 0;
+    p.wasOnField = true;
+    await updatePlayerFS(p);
+  }
+  delete slotMap[n];
+  await saveMatch();
+  closeModal('modal-slot');
+  showToast('⬆ Jogador removido do campo');
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL SUBSTITUIÇÃO
+// ══════════════════════════════════════════════════════
+function openSubModal() {
+  subOutId = null; subInId = null;
+  const onField = players.filter(p => p.onField);
+  const bench   = players.filter(p => !p.onField);
+
+  document.getElementById('sub-out-list').innerHTML = onField.length
+    ? onField.map(p => {
+        const m = getTotalMins(p);
+        return `<div class="sel-row" id="sout-${p.id}" onclick="pickSubOut('${p.id}')">
+          <div class="sel-avatar">${initials(p.name)}</div>
+          <div class="sel-info">
+            <div class="sel-name">${p.name}</div>
+            <div class="sel-detail">${p.pos} · ${m}min jogados</div>
+          </div>
+          <div class="sel-min ${m===0?'z':''}">${m}′</div>
+        </div>`;
+      }).join('')
+    : '<div class="empty">Ninguém em campo</div>';
+
+  document.getElementById('sub-in-list').innerHTML = bench.length
+    ? bench.map(p => {
+        const m = getTotalMins(p);
+        return `<div class="sel-row" id="sin-${p.id}" onclick="pickSubIn('${p.id}')">
+          <div class="sel-avatar">${initials(p.name)}</div>
+          <div class="sel-info">
+            <div class="sel-name">${p.name}</div>
+            <div class="sel-detail">${p.pos} · ${m}min jogados</div>
+          </div>
+          <div class="sel-min ${m===0?'z':''}">${m>0?m+'′':'—'}</div>
+        </div>`;
+      }).join('')
+    : '<div class="empty">Ninguém no banco</div>';
+
+  document.getElementById('modal-sub').classList.add('open');
+}
+function pickSubOut(id) {
+  subOutId = id;
+  document.querySelectorAll('[id^="sout-"]').forEach(e => e.classList.remove('picked'));
+  const el = document.getElementById('sout-' + id);
+  if (el) el.classList.add('picked');
+}
+function pickSubIn(id) {
+  subInId = id;
+  document.querySelectorAll('[id^="sin-"]').forEach(e => e.classList.remove('picked'));
+  const el = document.getElementById('sin-' + id);
+  if (el) el.classList.add('picked');
+}
+async function confirmSub() {
+  if (!subOutId || !subInId) { showToast('⚠️ Selecione quem sai e quem entra'); return; }
+  const pOut = players.find(p => p.id === subOutId);
+  const pIn  = players.find(p => p.id === subInId);
+  if (!pOut || !pIn) return;
+
+  const slotKey = Object.keys(slotMap).find(k => slotMap[k] === subOutId);
+
+  // Tira de campo
+  pOut.accSecs += Math.max(0, match.elapsed - (pOut._enteredAt||0));
+  pOut.onField = false; pOut._enteredAt = 0; pOut._periodSecs = 0;
+  pOut.wasOnField = true;
+
+  // Coloca em campo
+  pIn.onField = true; pIn._enteredAt = match.elapsed; pIn._periodSecs = 0;
+  pIn.hasPlayed = true;
+
+  // Transfere slot
+  if (slotKey !== undefined) {
+    slotMap[slotKey] = subInId;
+  } else {
+    Object.keys(slotMap).forEach(k => { if (slotMap[k] === subInId) delete slotMap[k]; });
+  }
+  Object.keys(slotMap).forEach(k => {
+    if (slotMap[k] === subInId && k !== slotKey) delete slotMap[k];
+  });
+
+  const timeStr = `${Math.floor(match.elapsed/60)}'`;
+  match.subs.push({ outId: subOutId, inId: subInId, time: match.elapsed, period: match.period, timeStr });
+
+  await Promise.all([ updatePlayerFS(pOut), updatePlayerFS(pIn), saveMatch() ]);
+  closeModal('modal-sub');
+  showToast(`🔄 ${pIn.name} ↔ ${pOut.name}`);
+  renderAll();
+}
+function openSubFromPlayer() {
+  closeModal('modal-player');
+  openSubModal();
+  if (playerModalId) {
+    setTimeout(() => {
+      const p = players.find(x => x.id === playerModalId);
+      if (p) {
+        if (p.onField) pickSubOut(playerModalId);
+        else           pickSubIn(playerModalId);
+      }
+    }, 250);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL JOGADOR (banco chip)
+// ══════════════════════════════════════════════════════
+function openPlayerModal(id) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  playerModalId = id;
+  document.getElementById('pm-name').textContent = p.name;
+  document.getElementById('pm-sub').textContent  = p.pos + (p.num ? ` · #${p.num}` : '');
+
+  const total = getTotal(p);
+  const m     = Math.floor(total / 60);
+  const dur   = match.duration;
+  const pct   = Math.min(100, Math.round(total / (dur*60) * 100));
+  const ok    = m >= dur;
+
+  document.getElementById('pm-content').innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div style="flex:1;background:var(--card2);border-radius:9px;padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:${ok?'var(--green)':'var(--text)'}">${m}<span style="font-size:1rem">min</span></div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">jogados</div>
+      </div>
+      <div style="flex:1;background:var(--card2);border-radius:9px;padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:${p.onField?'var(--green)':'var(--muted)'}">${p.onField?'▶':'🪑'}</div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${p.onField?'em campo':'banco'}</div>
+      </div>
+    </div>
+    <div style="background:var(--card2);border-radius:9px;padding:12px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:.72rem;color:var(--muted);font-weight:600">Progresso (${dur}min)</span>
+        <span style="font-size:.72rem;color:${ok?'var(--green)':'var(--blue)'};font-weight:700">${pct}%</span>
+      </div>
+      <div style="background:#222;border-radius:20px;height:7px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${ok?'var(--green)':'var(--blue)'};border-radius:20px;transition:width .5s"></div>
+      </div>
+      ${!ok && total>0 ? `<div style="font-size:.7rem;color:var(--yellow);margin-top:5px;font-weight:600">Falta ${dur-m}min para completar</div>` : ok ? `<div style="font-size:.7rem;color:var(--green);margin-top:5px;font-weight:600">✅ Tempo completo!</div>` : ''}
+    </div>`;
+
+  document.getElementById('modal-player').classList.add('open');
+}
+
+// ══════════════════════════════════════════════════════
+//  CORES
+// ══════════════════════════════════════════════════════
+function applyColor(key, val) {
+  colors[key] = val;
+  saveSettings();
+  applyColors();
+}
+function applyColors() {
+  const r = document.documentElement.style;
+  r.setProperty('--kit',      colors.kit       || '#111111');
+  r.setProperty('--kit-text', colors['kit-text']|| '#ffffff');
+  r.setProperty('--accent',   colors.accent    || '#ff6600');
+  r.setProperty('--field',    colors.field     || '#1e6b1e');
+  // Update pickers and swatches
+  const cfg = [
+    ['pick-kit',     'sw-kit',     'sw-kit-hex',     'kit'],
+    ['pick-kit-txt', 'sw-kit-txt', 'sw-kit-txt-hex', 'kit-text'],
+    ['pick-accent',  'sw-accent',  'sw-accent-hex',  'accent'],
+    ['pick-field',   'sw-field',   'sw-field-hex',   'field'],
+  ];
+  cfg.forEach(([pickId, swId, hexId, key]) => {
+    const v = colors[key] || '#000000';
+    const pick = document.getElementById(pickId);
+    const sw   = document.getElementById(swId);
+    const hex  = document.getElementById(hexId);
+    if (pick) pick.value = v;
+    if (sw)   sw.style.background = v;
+    if (hex)  hex.textContent = v;
+  });
+  // Update campo background
+  const campo = document.getElementById('campo');
+  if (campo) campo.style.background = colors.field || '#1e6b1e';
+}
+
+// ══════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════
+function changeDur(delta) {
+  match.duration = Math.max(10, Math.min(90, match.duration + delta));
+  saveMatch();
+  const el = document.getElementById('dur-cfg');
+  if (el) el.textContent = match.duration + ' min';
+  updateChronoDisplay();
+}
+function saveAppName() {
+  const v = document.getElementById('cfg-appname').value.trim() || 'PROFESSÔ';
+  appName = v;
+  saveSettings();
+  applyAppName();
+}
+function applyAppName() {
+  const hdr = document.querySelector('.hdr-logo');
+  if (hdr) hdr.innerHTML = appName;
+  document.title = appName;
+  const inp = document.getElementById('cfg-appname');
+  if (inp) inp.value = appName;
+}
+async function resetMatch() {
+  if (!confirm('Resetar partida? Cronômetro, minutagem e subs serão zerados.')) return;
+  if (match.running) pauseChrono();
+  match.period = 1; match.elapsed = 0; match.running = false; match.subs = [];
+  slotMap = {};
+  const saves = players.map(p => {
+    p.accSecs = 0; p.onField = false; p._enteredAt = 0; p._periodSecs = 0;
+    p.hasPlayed = false; p.wasOnField = false;
+    return updatePlayerFS(p);
+  });
+  saves.push(saveMatch());
+  await Promise.all(saves);
+  updateChronoDisplay();
+  renderAll();
+  showToast('🔄 Partida resetada');
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAIS
+// ══════════════════════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeBg(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
+function initials(name) {
+  return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+function shortName(name) {
+  const p = name.trim().split(/\s+/);
+  return p.length > 1 ? p[0] : name;
+}
+let _tt;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER ALL
+// ══════════════════════════════════════════════════════
+function renderAll() {
+  updateChronoDisplay();
+  renderField();
+  renderBench();
+  renderMinutagem();
+  renderRoster();
+  checkWarnings();
+  applyColors();
+  applyRole();
+  const durCfg = document.getElementById('dur-cfg');
+  if (durCfg) durCfg.textContent = match.duration + ' min';
+}
+
+// ══════════════════════════════════════════════════════
+//  EXPÕE FUNÇÕES AO WINDOW (necessário em type="module")
+// ══════════════════════════════════════════════════════
+Object.assign(window, {
+  goScreen, toggleChrono, resetChrono, setPeriod,
+  openSubModal, openSlotModal, openPlayerModal,
+  pickSlotPlayer, confirmSlot, removeFromSlot,
+  pickSubOut, pickSubIn, confirmSub, openSubFromPlayer,
+  savePlayer, editPlayer, cancelEditPlayer, removePlayer, toggleField,
+  applyColor, changeDur, saveAppName, resetMatch,
+  closeModal, closeBg,
+  fazerLogin, entrarComoVisitante, fazerLogout,
+});
+
+// ══════════════════════════════════════════════════════
+//  PWA INSTALL
+// ══════════════════════════════════════════════════════
+let _deferredInstall = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredInstall = e;
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'flex';
+});
+
+const btnInstall = document.getElementById('btn-install');
+if (btnInstall) {
+  btnInstall.addEventListener('click', async () => {
+    if (!_deferredInstall) return;
+    _deferredInstall.prompt();
+    const { outcome } = await _deferredInstall.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById('install-banner').style.display = 'none';
+      showToast('✅ App instalado!');
+    }
+    _deferredInstall = null;
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').style.display = 'none';
+  showToast('✅ PROFESSÔ instalado!');
+});
+
+// iOS Safari
+(function() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = ('standalone' in navigator && navigator.standalone) ||
+                       window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !isStandalone) {
+    setTimeout(() => {
+      const b = document.getElementById('ios-banner');
+      if (b) b.style.display = 'block';
+    }, 2000);
+  }
+})();
+</script>
+</body>
+</html>
